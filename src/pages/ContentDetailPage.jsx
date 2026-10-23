@@ -1,25 +1,36 @@
-import { ArrowLeft, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+
 import Checklist from "@/components/Checklist";
 import ContentFields from "@/components/ContentFields";
+import DeleteContentDialog from "@/components/DeleteContentDialog";
 import MetricsPanel from "@/components/MetricsPanel";
 import ReviewPanel from "@/components/ReviewPanel";
 import StageBar from "@/components/StageBar";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
-import { STAGES, canTransition, labelOf } from "@/lib/constants";
-import React from "react";
-import DeleteContentDialog from "@/components/DeleteContentDialog";
+import { labelOf, STAGES, canTransition } from "@/lib/constants";
 
 // Tahap berikutnya yang dipindah dengan tombol biasa.
 // Tahap review/revisi/ACC tidak ada di sini: itu dikerjakan lewat ReviewPanel.
-const NEXT_STAGE = { idea: "scripting", scripting: "recording", recording: "editing", ready: "published" };
+const NEXT_STAGE = {
+  idea: "scripting",
+  scripting: "recording",
+  recording: "editing",
+  ready: "published",
+};
 
 // Data dari API -> nilai form (null diganti string kosong agar input tidak error).
-// Status sengaja tidak ikut: status hanya berubah lewat tombol tahap dan panel review.
 function toFormValues(content) {
   return {
     title: content.title,
@@ -40,15 +51,14 @@ export default function ContentDetailPage() {
   const { user } = useAuth();
   const isEditor = user.role === "editor"; // editor hanya boleh melihat, review, dan checklist
 
-  const [content, setContent] = useState(null); // data tersimpan + checklists + metrics + reviews
-  const [values, setValues] = useState(null); // isi form yang sedang diedit
+  const [content, setContent] = useState(null);
+  const [values, setValues] = useState(null);
   const [channels, setChannels] = useState([]);
   const [editors, setEditors] = useState([]);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Editor tidak punya akses ke daftar channel/editor, jadi tidak diminta.
     Promise.all([
       api.getContent(id),
       isEditor ? [] : api.getChannels(),
@@ -70,10 +80,8 @@ export default function ContentDetailPage() {
 
   const changeValue = (name, value) => setValues({ ...values, [name]: value });
 
-  // Gabungkan data terbaru dari server ke state halaman.
   const applyUpdate = (updated) => setContent((previous) => ({ ...previous, ...updated }));
 
-  // Simpan isi form. `extra` dipakai untuk pindah tahap sekaligus menyimpan form.
   async function save(extra = {}, successMessage = "Perubahan disimpan") {
     setSaving(true);
     setErrors({});
@@ -90,7 +98,6 @@ export default function ContentDetailPage() {
       setValues(toFormValues(updated));
       toast.success(successMessage);
     } catch (error) {
-      // Validasi dari server (misal: link wajib diisi saat Tayang) tampil di bawah kolomnya.
       setErrors(error.errors || {});
       toast.error(error.message);
     } finally {
@@ -103,65 +110,88 @@ export default function ContentDetailPage() {
     save();
   }
 
-async function handleDelete() {
-  try {
-    await api.deleteContent(id);
-    toast.success("Konten dihapus");
-    navigate("/contents");
-  } catch (error) {
-    toast.error(error.message);
+  async function handleDelete() {
+    try {
+      await api.deleteContent(id);
+      toast.success("Konten dihapus");
+      navigate("/contents");
+    } catch (error) {
+      toast.error(error.message);
+    }
   }
-}
 
   const nextStage = NEXT_STAGE[content.status];
   const canAdvance = nextStage && canTransition(user, content, nextStage);
-  // Kolom link postingan muncul saat konten siap tayang, supaya bisa diisi sebelum menekan "Lanjut ke Tayang".
   const showPublishedUrl = ["ready", "published"].includes(content.status) || Boolean(errors.published_url);
 
   return (
-    <div>
-      <Link to="/contents" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="w-4 h-4" />
-        Semua konten
-      </Link>
+    <div className="space-y-6">
+      {/* Top Nav & Action Header */}
+      <div>
+        <Link
+          to="/contents"
+          className="inline-flex items-center gap-1 mb-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Semua konten
+        </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-3 mt-3">
-        <h1 className="text-2xl font-semibold">{content.title}</h1>
-        {!isEditor && <DeleteContentDialog content={content} onConfirm={handleDelete} />}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">{content.title}</h1>
+          {!isEditor && <DeleteContentDialog content={content} onConfirm={handleDelete} />}
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 mt-5">
-        <StageBar status={content.status} />
-        {canAdvance && (
-          <Button
-            size="sm"
-            disabled={saving}
-            onClick={() => save({ status: nextStage }, `Tahap diubah ke ${labelOf(STAGES, nextStage)}`)}
-          >
-            Lanjut ke {labelOf(STAGES, nextStage)}
-          </Button>
-        )}
-      </div>
+      {/* Stage Progress Card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-medium">Status & Progress</CardTitle>
+          <CardDescription>Tahapan alur kerja konten saat ini</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center justify-between gap-4">
+          <StageBar status={content.status} />
+          {canAdvance && (
+            <Button
+              size="sm"
+              disabled={saving}
+              onClick={() => save({ status: nextStage }, `Tahap diubah ke ${labelOf(STAGES, nextStage)}`)}
+            >
+              Lanjut ke {labelOf(STAGES, nextStage)}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_22rem]">
-        <div className="space-y-10">
-          <form onSubmit={handleSubmit}>
-            <ContentFields
-              values={values}
-              onChange={changeValue}
-              errors={errors}
-              channels={channels}
-              editors={isEditor ? undefined : editors}
-              readOnly={isEditor}
-              showPublishedUrl={showPublishedUrl}
-            />
-            {!isEditor && (
-              <Button type="submit" className="mt-6" disabled={saving}>
-                {saving ? "Menyimpan..." : "Simpan perubahan"}
-              </Button>
-            )}
-          </form>
+      {/* Main Grid Content */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
+        <div className="space-y-6">
+          {/* Main Form Fields Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Detail Konten</CardTitle>
+              <CardDescription>Kelola informasi utama dan draf skrip konten</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit}>
+                <ContentFields
+                  values={values}
+                  onChange={changeValue}
+                  errors={errors}
+                  channels={channels}
+                  editors={isEditor ? undefined : editors}
+                  readOnly={isEditor}
+                  showPublishedUrl={showPublishedUrl}
+                />
+                {!isEditor && (
+                  <Button type="submit" className="mt-6" disabled={saving}>
+                    {saving ? "Menyimpan..." : "Simpan perubahan"}
+                  </Button>
+                )}
+              </form>
+            </CardContent>
+          </Card>
 
+          {/* Metrics Panel */}
           {!isEditor && (
             <MetricsPanel
               contentId={content.id}
@@ -172,9 +202,11 @@ async function handleDelete() {
           )}
         </div>
 
-        <aside className="space-y-10">
-          {/* key: panel dibuat ulang saat tahap berubah supaya isian lama tidak terbawa */}
+        <aside className="space-y-6">
+          {/* Review Panel */}
           <ReviewPanel key={content.status} content={content} onUpdated={applyUpdate} />
+
+          {/* Checklist Panel */}
           <Checklist
             contentId={content.id}
             items={content.checklists}

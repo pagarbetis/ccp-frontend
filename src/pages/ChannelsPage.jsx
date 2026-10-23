@@ -1,12 +1,19 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
+
 import Field from "@/components/Field";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect as Select } from "@/components/ui/native-select";
 import { api } from "@/lib/api";
 import { PLATFORMS, labelOf } from "@/lib/constants";
-import React from "react";
 
 const EMPTY_FORM = { platform: "", handle_name: "" };
 
@@ -38,46 +45,67 @@ export default function ChannelsPage() {
   }
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-semibold">Channel</h1>
-      <p className="mt-1 text-muted-foreground">
-        Akun media sosial yang kamu kelola. Setiap konten dikaitkan ke satu channel.
-      </p>
+    <div className="max-w-3xl space-y-6">
+      {/* Header Halaman */}
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Channel</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Akun media sosial yang kamu kelola. Setiap konten dikaitkan ke satu channel.
+        </p>
+      </div>
 
-      <ul className="mt-6 divide-y border-y">
-        {channels.length === 0 && (
-          <li className="py-4 text-sm text-muted-foreground">
-            Belum ada channel. Tambahkan satu di bawah supaya bisa membuat konten.
-          </li>
-        )}
-        {channels.map((channel) => (
-          <li key={channel.id} className="flex items-baseline justify-between py-3">
-            <span className="font-medium">{channel.handle_name}</span>
-            <span className="text-sm text-muted-foreground">{labelOf(PLATFORMS, channel.platform)}</span>
-          </li>
-        ))}
-      </ul>
-
-      <form onSubmit={handleSubmit} className="mt-8 grid gap-4 sm:grid-cols-[10rem_1fr_auto] sm:items-start">
-        <Field label="Platform" error={errors.platform}>
-          <Select value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })}>
-            <option value="">Pilih platform</option>
-            {PLATFORMS.map((p) => (
-              <option key={p.value} value={p.value}>{p.label}</option>
+      {/* Card Daftar Channel */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Daftar Channel</CardTitle>
+          <CardDescription>Semua akun sosial media yang terdaftar dalam sistem</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="divide-y">
+            {channels.length === 0 && (
+              <li className="py-4 text-sm text-muted-foreground">
+                Belum ada channel. Tambahkan satu di bawah supaya bisa membuat konten.
+              </li>
+            )}
+            {channels.map((channel) => (
+              <li key={channel.id} className="flex items-baseline justify-between py-3">
+                <span className="font-medium">{channel.handle_name}</span>
+                <span className="text-sm text-muted-foreground">{labelOf(PLATFORMS, channel.platform)}</span>
+              </li>
             ))}
-          </Select>
-        </Field>
-        <Field label="Nama akun" error={errors.handle_name}>
-          <Input
-            placeholder="@namakamu"
-            value={form.handle_name}
-            onChange={(e) => setForm({ ...form, handle_name: e.target.value })}
-          />
-        </Field>
-        <Button type="submit" disabled={saving} className="sm:mt-[1.625rem]">
-          Tambah channel
-        </Button>
-      </form>
+          </ul>
+        </CardContent>
+      </Card>
+
+      {/* Card Form Tambah Channel */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Tambah Channel Baru</CardTitle>
+          <CardDescription>Daftarkan akun media sosial baru untuk pengelolaan konten</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-[12rem_1fr_auto] sm:items-start">
+            <Field label="Platform" error={errors.platform}>
+              <Select value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })}>
+                <option value="">Pilih platform</option>
+                {PLATFORMS.map((p) => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Nama akun" error={errors.handle_name}>
+              <Input
+                placeholder="@namakamu"
+                value={form.handle_name}
+                onChange={(e) => setForm({ ...form, handle_name: e.target.value })}
+              />
+            </Field>
+            <Button type="submit" disabled={saving} className="sm:mt-[1.625rem]">
+              Tambah channel
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
