@@ -5,23 +5,39 @@ const USER_KEY = "ccp_user";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  // 1. Amankan parsing dari localStorage biar gak crash kalau ada "undefined"
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem(USER_KEY);
-    return saved ? JSON.parse(saved || "") : null;
+    if (!saved || saved === "undefined" || saved === "null") return null;
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return null;
+    }
   });
 
-  function saveSession({ token, user }) {
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    setUser(user);
+  // 2. Sesuaikan destructuring dengan response backend asli ({ token, data })
+  function saveSession(response) {
+    // Ambil token dan data user (backend ngirim 'data', bukan 'user')
+    const token = response?.token;
+    const userData = response?.data || response?.user; // fallback jika ada beda response
+
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    
+    if (userData) {
+      localStorage.setItem(USER_KEY, JSON.stringify(userData));
+      setUser(userData);
+    }
   }
 
   async function login(credentials) {
-    saveSession(await api.login(credentials));
+    const res = await api.login(credentials);
+    saveSession(res);
   }
 
   async function register(data) {
-    saveSession(await api.register(data));
+    const res = await api.register(data);
+    saveSession(res);
   }
 
   function logout() {

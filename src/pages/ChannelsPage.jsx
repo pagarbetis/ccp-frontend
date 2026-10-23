@@ -15,7 +15,8 @@ import { NativeSelect as Select } from "@/components/ui/native-select";
 import { api } from "@/lib/api";
 import { PLATFORMS, labelOf } from "@/lib/constants";
 
-const EMPTY_FORM = { platform: "", handle_name: "" };
+// Sesuaikan property form jadi handleName agar cocok dengan backend
+const EMPTY_FORM = { platform: "", handleName: "" };
 
 export default function ChannelsPage() {
   const [channels, setChannels] = useState([]);
@@ -24,7 +25,12 @@ export default function ChannelsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.getChannels().then(setChannels).catch((error) => toast.error(error.message));
+    api.getChannels()
+      .then((res) => {
+        const list = Array.isArray(res) ? res : (res?.data || res?.channels || []);
+        setChannels(list);
+      })
+      .catch((error) => toast.error(error.message));
   }, []);
 
   async function handleSubmit(event) {
@@ -32,8 +38,18 @@ export default function ChannelsPage() {
     setSaving(true);
     setErrors({});
     try {
-      const channel = await api.createChannel(form);
-      setChannels([...channels, channel]);
+      // Ambil data user yang sedang login untuk mendapatkan userId
+      const currentUser = JSON.parse(localStorage.getItem("ccp_user") || "{}");
+      
+      // Gabungkan userId ke dalam payload yang dikirim ke backend
+      const payload = {
+        ...form,
+        userId: currentUser.id || currentUser.userId,
+      };
+
+      const res = await api.createChannel(payload);
+      const newChannel = res?.data || res;
+      setChannels([...channels, newChannel]);
       setForm(EMPTY_FORM);
       toast.success("Channel ditambahkan");
     } catch (error) {
@@ -46,7 +62,6 @@ export default function ChannelsPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      {/* Header Halaman */}
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Channel</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -54,7 +69,6 @@ export default function ChannelsPage() {
         </p>
       </div>
 
-      {/* Card Daftar Channel */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Daftar Channel</CardTitle>
@@ -69,7 +83,7 @@ export default function ChannelsPage() {
             )}
             {channels.map((channel) => (
               <li key={channel.id} className="flex items-baseline justify-between py-3">
-                <span className="font-medium">{channel.handle_name}</span>
+                <span className="font-medium">{channel.handleName}</span>
                 <span className="text-sm text-muted-foreground">{labelOf(PLATFORMS, channel.platform)}</span>
               </li>
             ))}
@@ -77,7 +91,6 @@ export default function ChannelsPage() {
         </CardContent>
       </Card>
 
-      {/* Card Form Tambah Channel */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Tambah Channel Baru</CardTitle>
@@ -93,11 +106,11 @@ export default function ChannelsPage() {
                 ))}
               </Select>
             </Field>
-            <Field label="Nama akun" error={errors.handle_name}>
+            <Field label="Nama akun" error={errors.handleName || errors.handle_name}>
               <Input
                 placeholder="@namakamu"
-                value={form.handle_name}
-                onChange={(e) => setForm({ ...form, handle_name: e.target.value })}
+                value={form.handleName}
+                onChange={(e) => setForm({ ...form, handleName: e.target.value })}
               />
             </Field>
             <Button type="submit" disabled={saving} className="sm:mt-[1.625rem]">
