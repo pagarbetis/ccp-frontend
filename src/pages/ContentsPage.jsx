@@ -34,20 +34,24 @@ export default function ContentsPage() {
 
   useEffect(() => {
     setLoading(true);
+    
+    // Kirim parameter channel_id hanya jika terisi, atau kosongkan jika "Semua channel"
+    const params = {};
+    if (channelId) {
+      params.channel_id = channelId;
+    }
+
     api
-      .getContents({ channel_id: channelId })
+      .getContents(params)
       .then(setContents)
       .catch((error) => toast.error(error.message))
       .finally(() => setLoading(false));
   }, [channelId]);
 
   const contentsInFormat = useMemo(() => {
-    // console.log(contents);
     return contents.filter(
       (content) => !format || content.format_type === format,
     );
-
-    // return [];
   }, [contents, format]);
 
   const visibleContents = contentsInFormat.filter(
@@ -131,7 +135,7 @@ export default function ContentsPage() {
             </tr>
           </thead>
           <tbody>
-            {visibleContents.map((content) => (
+            {!loading && visibleContents.map((content) => (
               <ContentRow key={content.id} content={content} />
             ))}
           </tbody>

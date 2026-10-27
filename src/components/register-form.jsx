@@ -1,61 +1,64 @@
-import { useState } from "react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Link, useNavigate } from "react-router-dom"
-import { useAuth } from "@/hooks/useAuth"
-import { ROLES } from "@/lib/constants"
-import { toast } from "sonner"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { ROLES } from "@/lib/constants";
+import { toast } from "sonner";
 
 export function RegisterForm({ className, ...props }) {
-  const { register } = useAuth()
-  const navigate = useNavigate()
-  
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "creator" })
-  const [errors, setErrors] = useState({})
-  const [loading, setLoading] = useState(false)
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "creator",
+  });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.id]: e.target.value })
-  }
+    setForm({ ...form, [e.target.id]: e.target.value });
+  };
 
   const handleSelectChange = (e) => {
-    setForm({ ...form, role: e.target.value })
-  }
+    setForm({ ...form, role: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setErrors({})
+    e.preventDefault();
+    setLoading(true);
+    setErrors({});
 
     try {
-      await register(form)
-      toast.success("Akun berhasil dibuat!")
-      navigate(form.role === "editor" ? "/contents" : "/channels")
+      await register(form);
+      toast.success("Akun berhasil dibuat!");
+      navigate(form.role === "editor" ? "/contents" : "/channels");
     } catch (error) {
-      setErrors(error.errors || {})
-      toast.error(error.message || "Gagal membuat akun")
+      setErrors(error.errors || {});
+      toast.error(error.message || "Gagal membuat akun");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Buat Akun Baru</CardTitle>
-          <CardDescription>
-            Masukkan data diri lu untuk mendaftar
-          </CardDescription>
+          <CardDescription>Masukkan data diri untuk mendaftar</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
@@ -65,13 +68,15 @@ export function RegisterForm({ className, ...props }) {
                 <Input
                   id="name"
                   type="text"
-                  placeholder="Nama lu"
+                  placeholder="Nama"
                   value={form.name}
                   onChange={handleChange}
                   required
                   autoFocus
                 />
-                {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name}</p>
+                )}
               </div>
 
               <div className="grid gap-2">
@@ -84,7 +89,9 @@ export function RegisterForm({ className, ...props }) {
                   onChange={handleChange}
                   required
                 />
-                {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email}</p>
+                )}
               </div>
 
               <div className="grid gap-2">
@@ -97,7 +104,9 @@ export function RegisterForm({ className, ...props }) {
                   onChange={handleChange}
                   required
                 />
-                {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+                {errors.password && (
+                  <p className="text-sm text-red-500">{errors.password}</p>
+                )}
               </div>
 
               <div className="grid gap-2">
@@ -108,13 +117,21 @@ export function RegisterForm({ className, ...props }) {
                   onChange={handleSelectChange}
                   className="flex w-full px-3 py-1 text-sm transition-colors bg-transparent border rounded-md shadow-sm h-9 border-input file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {ROLES.filter((role) => role.value !== "admin").map((role) => (
-                    <option key={role.value} value={role.value} className="bg-background text-foreground">
-                      {role.label}
-                    </option>
-                  ))}
+                  {ROLES.filter((role) => role.value !== "admin").map(
+                    (role) => (
+                      <option
+                        key={role.value}
+                        value={role.value}
+                        className="bg-background text-foreground"
+                      >
+                        {role.label}
+                      </option>
+                    ),
+                  )}
                 </select>
-                {errors.role && <p className="text-sm text-red-500">{errors.role}</p>}
+                {errors.role && (
+                  <p className="text-sm text-red-500">{errors.role}</p>
+                )}
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
@@ -132,5 +149,5 @@ export function RegisterForm({ className, ...props }) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
