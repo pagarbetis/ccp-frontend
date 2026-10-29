@@ -64,7 +64,11 @@ export function canTransition(user, content, to) {
   if (!allowed) return false;
 
   if (user.role === "admin") return true;
-  if (user.role === "editor") return allowed.includes("editor") && content.editor_id === user.id;
+  if (user.role === "editor")
+    return (
+      allowed.includes("editor") &&
+      (Number(content.editor_id) === Number(user.id) || !content.editor_id)
+    );
 
   // Kreator: boleh semua tahap miliknya. Tugas editor pun boleh dikerjakan
   // sendiri selama belum ada editor yang ditugaskan.

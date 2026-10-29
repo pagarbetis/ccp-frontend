@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Field from "@/components/Field";
 import { Button } from "@/components/ui/button";
@@ -16,9 +16,6 @@ const ACTION_LABELS = {
   revision_requested: "Revisi diminta",
 };
 
-// Panel alur review. Isinya berubah sesuai tahap konten dan peran pengguna:
-//  - editor (tahap Editing/Revisi): kirim link hasil editing
-//  - kreator (tahap Review): setujui atau minta revisi
 export default function ReviewPanel({ content, onUpdated }) {
   const { user } = useAuth();
   const [reviewUrl, setReviewUrl] = useState(content.review_url ?? "");
@@ -26,29 +23,38 @@ export default function ReviewPanel({ content, onUpdated }) {
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    setReviewUrl(content.review_url ?? "");
+  }, [content.review_url]);
+
   const canSubmit = canTransition(user, content, "in_review");
-  const canDecide = canTransition(user, content, "ready"); // hanya true saat tahap Review
+  const canDecide = canTransition(user, content, "ready");
   const history = content.reviews ?? [];
 
-  // Pesan untuk pengguna yang sedang tidak punya aksi
   let waitingText = null;
-  if (content.status === "in_review") waitingText = "Menunggu keputusan kreator.";
-  else if (["editing", "revision"].includes(content.status) && content.editor_name) {
+  if (content.status === "in_review")
+    waitingText = "Menunggu keputusan kreator.";
+  else if (
+    ["editing", "revision"].includes(content.status) &&
+    content.editor_name
+  ) {
     waitingText = `Sedang dikerjakan ${content.editor_name}.`;
   }
 
-  if (!canSubmit && !canDecide && !waitingText && history.length === 0) return null;
+  if (!canSubmit && !canDecide && !waitingText && history.length === 0)
+    return null;
 
   async function run(action, successMessage) {
     setBusy(true);
     setErrors({});
     try {
-      onUpdated(await action());
+      const result = await action();
+      onUpdated(result);
       setNote("");
       toast.success(successMessage);
     } catch (error) {
       setErrors(error.errors || {});
-      toast.error(error.message);
+      toast.error(error.message || "Terjadi kesalahan");
     } finally {
       setBusy(false);
     }
@@ -66,11 +72,20 @@ export default function ReviewPanel({ content, onUpdated }) {
             </p>
           )}
           <Field label="Link hasil editing" error={errors.review_url}>
-            <Input value={reviewUrl} onChange={(e) => setReviewUrl(e.target.value)} placeholder="https://" />
+            <Input
+              value={reviewUrl}
+              onChange={(e) => setReviewUrl(e.target.value)}
+              placeholder="https://"
+            />
           </Field>
           <Button
             disabled={busy}
-            onClick={() => run(() => api.submitReview(content.id, { review_url: reviewUrl }), "Dikirim untuk review")}
+            onClick={() =>
+              run(
+                () => api.submitReview(content.id, { review_url: reviewUrl }),
+                "Dikirim untuk review",
+              )
+            }
           >
             Kirim untuk review
           </Button>
@@ -79,20 +94,46 @@ export default function ReviewPanel({ content, onUpdated }) {
 
       {canDecide && (
         <div className="space-y-3">
-          <a href={content.review_url} target="_blank" rel="noreferrer" className="text-sm font-medium underline text-primary">
+          <a
+            href={content.review_url || content.reviewUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm font-medium underline text-primary"
+          >
             Buka hasil editing
           </a>
-          <Field label="Catatan revisi" error={errors.note} hint="Wajib diisi jika meminta revisi.">
-            <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
+          <Field
+            label="Catatan revisi"
+            error={errors.note}
+            hint="Wajib diisi jika meminta revisi."
+          >
+            <Textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+            />
           </Field>
           <div className="flex gap-2">
-            <Button disabled={busy} onClick={() => run(() => api.approveReview(content.id), "Disetujui, siap tayang")}>
+            <Button
+              disabled={busy}
+              onClick={() =>
+                run(
+                  () => api.approveReview(content.id),
+                  "Disetujui, siap tayang",
+                )
+              }
+            >
               Setujui (ACC)
             </Button>
             <Button
               variant="outline"
               disabled={busy}
-              onClick={() => run(() => api.requestRevision(content.id, { note }), "Dikembalikan ke editor")}
+              onClick={() =>
+                run(
+                  () => api.requestRevision(content.id, { note }),
+                  "Dikembalikan ke editor",
+                )
+              }
             >
               Minta revisi
             </Button>
@@ -104,7 +145,12 @@ export default function ReviewPanel({ content, onUpdated }) {
         <p className="text-sm text-muted-foreground">
           {waitingText}{" "}
           {content.status === "in_review" && content.review_url && (
-            <a href={content.review_url} target="_blank" rel="noreferrer" className="font-medium underline text-primary">
+            <a
+              href={content.review_url}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium underline text-primary"
+            >
               Buka hasil editing
             </a>
           )}
@@ -116,8 +162,15 @@ export default function ReviewPanel({ content, onUpdated }) {
           {history.map((item) => (
             <li key={item.id} className="py-2">
               <div className="flex justify-between gap-2">
-                <span className="font-medium">{ACTION_LABELS[item.action]}</span>
-                <span className="text-muted-foreground">{formatDate(item.created_at.slice(0, 10))}</span>
+                <span className="font-medium">
+                  {ACTION_LABELS[item.action]}
+                </span>
+                {/* 🔥 AMANKAN DENGAN OPTIONAL CHAINING DAN FALLBACK */}
+                <span className="text-muted-foreground">
+                  {item.created_at
+                    ? formatDate(item.created_at.slice(0, 10))
+                    : ""}
+                </span>
               </div>
               <div className="text-muted-foreground">{item.user_name}</div>
               {item.note && <p className="mt-1">{item.note}</p>}

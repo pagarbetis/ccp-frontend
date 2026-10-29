@@ -33,8 +33,14 @@ export default function NewContentPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.getChannels().then(setChannels).catch((error) => toast.error(error.message));
-    api.getUsers("editor").then(setEditors).catch((error) => toast.error(error.message));
+    api
+      .getChannels()
+      .then(setChannels)
+      .catch((error) => toast.error(error.message));
+    api
+      .getUsers("editor")
+      .then(setEditors)
+      .catch((error) => toast.error(error.message));
   }, []);
 
   const changeValue = (name, value) => setValues({ ...values, [name]: value });
@@ -52,7 +58,7 @@ export default function NewContentPage() {
         status: "idea", // konten baru selalu mulai dari Ide
       });
       toast.success("Ide disimpan");
-      navigate(`/contents/${content.id}`);
+      navigate(`/contents`);
     } catch (error) {
       setErrors(error.errors || {});
       toast.error(error.message);
@@ -75,7 +81,10 @@ export default function NewContentPage() {
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">
               Kamu belum punya channel.{" "}
-              <Link to="/channels" className="font-medium underline text-primary">
+              <Link
+                to="/channels"
+                className="font-medium underline text-primary"
+              >
                 Tambahkan channel
               </Link>{" "}
               dulu sebelum membuat konten.
@@ -86,14 +95,29 @@ export default function NewContentPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Formulir Ide Konten</CardTitle>
-            <CardDescription>Isi detail informasi awal untuk ide konten kamu</CardDescription>
+            <CardDescription>
+              Isi detail informasi awal untuk ide konten kamu
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit}>
-              <ContentFields values={values} onChange={changeValue} errors={errors} channels={channels} editors={editors} />
+              <ContentFields
+                values={values}
+                onChange={changeValue}
+                errors={errors}
+                channels={channels}
+                editors={editors}
+              />
               <div className="flex gap-2 mt-8">
-                <Button type="submit" disabled={saving}>Simpan ide</Button>
-                <Link to="/contents" className={buttonVariants({ variant: "outline" })}>Batal</Link>
+                <Button type="submit" disabled={saving}>
+                  Simpan ide
+                </Button>
+                <Link
+                  to="/contents"
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  Batal
+                </Link>
               </div>
             </form>
           </CardContent>

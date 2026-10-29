@@ -20,7 +20,7 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen">
       <header className="border-b bg-card">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
+        <div className="flex items-center max-w-6xl gap-6 px-4 mx-auto h-14">
           <span className="font-bold">Pipeline Konten</span>
 
           <nav className="flex gap-1">
@@ -37,19 +37,24 @@ export default function AppLayout() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3">
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              {user.name}
-            </span>
+          <div className="flex items-center gap-3 ml-auto">
+            {/* Nama & Role */}
+            <div className="hidden text-sm sm:flex sm:items-center sm:gap-2">
+              <span className="font-medium">{user?.name}</span>
+              <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground capitalize">
+                {user?.role}
+              </span>
+            </div>
+
             <Button variant="ghost" size="sm" onClick={logout}>
-              <LogOut className="h-4 w-4" />
+              <LogOut className="w-4 h-4" />
               Keluar
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="max-w-6xl px-4 py-8 mx-auto">
         <Outlet />
       </main>
     </div>

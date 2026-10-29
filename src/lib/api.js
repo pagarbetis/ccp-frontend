@@ -40,8 +40,8 @@ async function request(method, path, body) {
     return data;
   }
 
-  // UNTUK ENDPOINT LAIN (Contents, Channels, Users, dll): 
-  // Jika backend membungkus di dalam .data, otomatis ambil .data-nya. 
+  // UNTUK ENDPOINT LAIN (Contents, Channels, Users, dll):
+  // Jika backend membungkus di dalam .data, otomatis ambil .data-nya.
   // Jika tidak, kembalikan data utuh.
   return data.data !== undefined ? data.data : data;
 }
@@ -75,9 +75,12 @@ export const api = {
   getUsers: (role) => request("GET", `/users${role ? `?role=${role}` : ""}`),
   updateUserRole: (id, role) => request("PATCH", `/users/${id}/role`, { role }),
 
-  submitReview: (id, body) =>
-    request("POST", `/contents/${id}/review/submit`, body),
-  approveReview: (id) => request("POST", `/contents/${id}/review/approve`),
+  submitReview: (id, body) => request("POST", `/contents/${id}/submit`, body),
+  approveReview: (id) =>
+    request("POST", `/contents/${id}/process`, { action: "approved" }),
   requestRevision: (id, body) =>
-    request("POST", `/contents/${id}/review/revision`, body),
+    request("POST", `/contents/${id}/process`, {
+      action: "revision_requested",
+      note: body.note,
+    }),
 };

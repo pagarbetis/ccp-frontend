@@ -34,7 +34,7 @@ export default function ContentsPage() {
 
   useEffect(() => {
     setLoading(true);
-    
+
     // Kirim parameter channel_id hanya jika terisi, atau kosongkan jika "Semua channel"
     const params = {};
     if (channelId) {
@@ -135,9 +135,10 @@ export default function ContentsPage() {
             </tr>
           </thead>
           <tbody>
-            {!loading && visibleContents.map((content) => (
-              <ContentRow key={content.id} content={content} />
-            ))}
+            {!loading &&
+              visibleContents.map((content) => (
+                <ContentRow key={content.id} content={content} />
+              ))}
           </tbody>
         </table>
 

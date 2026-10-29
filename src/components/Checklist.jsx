@@ -7,26 +7,28 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import React from "react";
 
-// Checklist kebutuhan produksi. `items` dan `onChange` dipegang halaman detail.
-export default function Checklist({ contentId, items, onChange }) {
+export default function Checklist({ contentId, items = [], onChange }) {
   const [newTask, setNewTask] = useState("");
   const [error, setError] = useState("");
 
-  const doneCount = items.filter((item) => item.is_completed).length;
+  // 🔥 Ganti is_completed jadi isDone
+  const doneCount = items.filter((item) => item.isDone).length;
 
   async function handleAdd(event) {
     event.preventDefault();
     setError("");
+    
+    if (!newTask.trim()) return;
+
     try {
-      const item = await api.addChecklist(contentId, { task_name: newTask });
+      const item = await api.addChecklist(contentId, { task: newTask });
       onChange([...items, item]);
       setNewTask("");
     } catch (err) {
-      setError(err.errors?.task_name || err.message);
+      setError(err.errors?.task || err.message);
     }
   }
 
-  // Update tanpa reload halaman: ganti hanya item yang berubah.
   async function handleToggle(id) {
     try {
       const updated = await api.toggleChecklist(id);
@@ -67,30 +69,34 @@ export default function Checklist({ contentId, items, onChange }) {
             <input
               type="checkbox"
               id={`task-${item.id}`}
-              checked={item.is_completed}
+              // 🔥 Ganti is_completed jadi isDone
+              checked={item.isDone}
               onChange={() => handleToggle(item.id)}
               className="h-4 w-4 accent-[hsl(var(--primary))]"
             />
             <label
               htmlFor={`task-${item.id}`}
-              className={cn("flex-1 text-sm", item.is_completed && "text-muted-foreground line-through")}
+              // 🔥 Ganti is_completed jadi isDone
+              className={cn("flex-1 text-sm", item.isDone && "text-muted-foreground line-through")}
             >
-              {item.task_name}
+              {/* 🔥 Ganti task_name jadi task */}
+              {item.task}
             </label>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={() => handleDelete(item.id)}
-              aria-label={`Hapus tugas ${item.task_name}`}
+              // 🔥 Ganti task_name jadi task
+              aria-label={`Hapus tugas ${item.task}`}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="w-4 h-4" />
             </Button>
           </li>
         ))}
       </ul>
 
-      <form onSubmit={handleAdd} className="mt-3 flex gap-2">
+      <form onSubmit={handleAdd} className="flex gap-2 mt-3">
         <Input value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="Tugas baru" />
         <Button type="submit" variant="outline">Tambah</Button>
       </form>
