@@ -5,10 +5,10 @@ import React from "react";
 export default function Field({ label, error, hint, children }) {
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
+      <Label className="text-sm font-medium text-slate-200">{label}</Label>
       {children}
-      {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {hint && !error && <p className="text-xs text-slate-400">{hint}</p>}
+      {error && <p className="text-sm font-medium text-red-400">{error}</p>}
     </div>
   );
 }

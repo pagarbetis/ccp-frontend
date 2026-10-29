@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { RegisterForm } from "@/components/register-form"; // Sesuaikan path lokasi file RegisterForm
+import AuthShell from "@/components/AuthShell";
+import { RegisterForm } from "@/components/register-form";
 
 export default function RegisterPage() {
   const { user } = useAuth();
@@ -9,10 +10,8 @@ export default function RegisterPage() {
   if (user) return <Navigate to="/contents" replace />;
 
   return (
-    <div className="flex items-center justify-center w-full p-6 min-h-svh md:p-10">
-      <div className="w-full max-w-sm">
-        <RegisterForm />
-      </div>
-    </div>
+    <AuthShell>
+      <RegisterForm />
+    </AuthShell>
   );
 }

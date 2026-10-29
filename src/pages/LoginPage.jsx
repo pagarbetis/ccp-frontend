@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { LoginForm } from "@/components/login-form"; // Sesuaikan path lokasi file LoginForm kamu
+import AuthShell from "@/components/AuthShell";
+import { LoginForm } from "@/components/login-form";
 
 export default function LoginPage() {
   const { user } = useAuth();
@@ -9,10 +10,8 @@ export default function LoginPage() {
   if (user) return <Navigate to="/contents" replace />;
 
   return (
-    <div className="flex items-center justify-center w-full p-6 min-h-svh md:p-10">
-      <div className="w-full max-w-sm">
-        <LoginForm />
-      </div>
-    </div>
+    <AuthShell>
+      <LoginForm />
+    </AuthShell>
   );
 }
