@@ -43,15 +43,30 @@ export default function NewContentPage() {
       .catch((error) => toast.error(error.message));
   }, []);
 
-  const changeValue = (name, value) => setValues({ ...values, [name]: value });
+  const changeValue = (name, value) => {
+    setValues({ ...values, [name]: value });
+    // Hapus error title otomatis waktu user mulai ngetik
+    if (name === "title" && errors.title) {
+      setErrors({ ...errors, title: null });
+    }
+  };
 
   async function handleSubmit(event) {
     event.preventDefault();
-    setSaving(true);
     setErrors({});
+
+    // Validasi: Judul wajib diisi
+    if (!values.title || values.title.trim() === "") {
+      setErrors({ title: "Judul konten wajib diisi!" });
+      toast.error("Mohon isi judul konten terlebih dahulu.");
+      return;
+    }
+
+    setSaving(true);
     try {
       const content = await api.createContent({
         ...values,
+        title: values.title.trim(),
         channel_id: Number(values.channel_id) || null,
         editor_id: Number(values.editor_id) || null,
         scheduled_date: values.scheduled_date || null,
@@ -61,29 +76,29 @@ export default function NewContentPage() {
       navigate(`/contents`);
     } catch (error) {
       setErrors(error.errors || {});
-      toast.error(error.message);
+      toast.error(error.message || "Gagal menyimpan konten");
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-3xl space-y-6 text-slate-100">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Konten baru</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight text-white">Konten baru</h1>
+        <p className="mt-1 text-sm text-slate-400">
           Buat draf ide konten baru untuk mulai mengelola alur produksi.
         </p>
       </div>
 
       {channels.length === 0 ? (
-        <Card>
+        <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-300">
               Kamu belum punya channel.{" "}
               <Link
                 to="/channels"
-                className="font-medium underline text-primary"
+                className="font-medium text-blue-400 underline hover:text-blue-300"
               >
                 Tambahkan channel
               </Link>{" "}
@@ -92,10 +107,10 @@ export default function NewContentPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
           <CardHeader>
-            <CardTitle className="text-lg">Formulir Ide Konten</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg font-semibold text-white">Formulir Ide Konten</CardTitle>
+            <CardDescription className="text-slate-400">
               Isi detail informasi awal untuk ide konten kamu
             </CardDescription>
           </CardHeader>
@@ -108,13 +123,17 @@ export default function NewContentPage() {
                 channels={channels}
                 editors={editors}
               />
-              <div className="flex gap-2 mt-8">
-                <Button type="submit" disabled={saving}>
-                  Simpan ide
+              <div className="flex gap-3 mt-8">
+                <Button 
+                  type="submit" 
+                  disabled={saving}
+                  className="px-6 font-medium text-white bg-blue-600 shadow-lg hover:bg-blue-500 shadow-blue-600/25 h-11"
+                >
+                  {saving ? "Menyimpan..." : "Simpan ide"}
                 </Button>
                 <Link
                   to="/contents"
-                  className={buttonVariants({ variant: "outline" })}
+                  className={buttonVariants({ variant: "outline" }) + " border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-700 hover:text-white h-11 px-6"}
                 >
                   Batal
                 </Link>

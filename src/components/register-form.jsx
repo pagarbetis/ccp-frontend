@@ -1,146 +1,154 @@
-import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { useState } from "react"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { ROLES } from "@/lib/constants";
-import { toast } from "sonner";
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "@/hooks/useAuth"
+import { toast } from "sonner"
+import { motion } from "framer-motion"
+import { Eye, EyeOff } from "lucide-react"
 
 export function RegisterForm({ className, ...props }) {
-  const { register } = useAuth();
-  const navigate = useNavigate();
-
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "creator",
-  });
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  const { register } = useAuth()
+  const navigate = useNavigate()
+  
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" })
+  const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.id]: e.target.value });
-  };
-
-  const handleSelectChange = (e) => {
-    setForm({ ...form, role: e.target.value });
-  };
+    setForm({ ...form, [e.target.id]: e.target.value })
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrors({});
+    e.preventDefault()
+
+    if (form.password !== form.confirmPassword) {
+      toast.error("Password dan konfirmasi password tidak sama!")
+      return
+    }
+
+    setLoading(true)
 
     try {
-      await register(form);
-      toast.success("Akun berhasil dibuat!");
-      navigate(form.role === "editor" ? "/contents" : "/channels");
+      await register(form)
+      toast.success("Registrasi berhasil!")
+      navigate("/contents")
     } catch (error) {
-      setErrors(error.errors || {});
-      toast.error(error.message || "Gagal membuat akun");
+      console.error("Register error:", error)
+      toast.error(error.response?.data?.message || error.message || "Registrasi gagal!")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Buat Akun Baru</CardTitle>
-          <CardDescription>Masukkan data diri untuk mendaftar</CardDescription>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className={cn("flex flex-col gap-6", className)} 
+      {...props}
+    >
+      <Card className="shadow-2xl border-slate-800/80 bg-slate-900/90 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
+        <CardHeader className="pb-4 space-y-2 text-left">
+          <CardTitle className="text-2xl font-bold tracking-tight text-white">Buat Akun Baru</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
-            <div className="grid gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="name">Nama Lengkap</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Nama"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
-                  autoFocus
-                />
-                {errors.name && (
-                  <p className="text-sm text-red-500">{errors.name}</p>
-                )}
-              </div>
+            <div className="grid gap-5">
+              <div className="grid gap-4">
+                <div className="grid gap-2 text-left">
+                  <Label htmlFor="name" className="text-xs font-semibold tracking-wider uppercase text-slate-300">Nama Lengkap</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Nama kamu"
+                    value={form.name}
+                    onChange={handleChange}
+                    className="border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500 h-11"
+                    required
+                  />
+                </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={form.email}
-                  onChange={handleChange}
-                  required
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email}</p>
-                )}
-              </div>
+                <div className="grid gap-2 text-left">
+                  <Label htmlFor="email" className="text-xs font-semibold tracking-wider uppercase text-slate-300">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="nama@email.com"
+                    value={form.email}
+                    onChange={handleChange}
+                    className="border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500 h-11"
+                    required
+                  />
+                </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Minimal 8 karakter"
-                  value={form.password}
-                  onChange={handleChange}
-                  required
-                />
-                {errors.password && (
-                  <p className="text-sm text-red-500">{errors.password}</p>
-                )}
-              </div>
+                <div className="grid gap-2 text-left">
+                  <Label htmlFor="password" className="text-xs font-semibold tracking-wider uppercase text-slate-300">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={form.password}
+                      onChange={handleChange}
+                      className="pr-10 border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500 h-11"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute transition-colors -translate-y-1/2 right-3 top-1/2 text-slate-400 hover:text-slate-200 focus:outline-none"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="role">Daftar Sebagai</Label>
-                <select
-                  id="role"
-                  value={form.role}
-                  onChange={handleSelectChange}
-                  className="flex w-full px-3 py-1 text-sm transition-colors bg-transparent border rounded-md shadow-sm h-9 border-input file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                <div className="grid gap-2 text-left">
+                  <Label htmlFor="confirmPassword" className="text-xs font-semibold tracking-wider uppercase text-slate-300">Konfirmasi Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={form.confirmPassword}
+                      onChange={handleChange}
+                      className="pr-10 border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500 h-11"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute transition-colors -translate-y-1/2 right-3 top-1/2 text-slate-400 hover:text-slate-200 focus:outline-none"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full mt-2 font-medium text-white transition-all bg-blue-600 shadow-lg hover:bg-blue-500 shadow-blue-600/25 h-11" 
+                  disabled={loading}
                 >
-                  {ROLES.filter((role) => role.value !== "admin").map(
-                    (role) => (
-                      <option
-                        key={role.value}
-                        value={role.value}
-                        className="bg-background text-foreground"
-                      >
-                        {role.label}
-                      </option>
-                    ),
-                  )}
-                </select>
-                {errors.role && (
-                  <p className="text-sm text-red-500">{errors.role}</p>
-                )}
+                  {loading ? "Memproses..." : "Daftar"}
+                </Button>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Membuat akun..." : "Daftar"}
-              </Button>
-
-              <div className="text-sm text-center">
+              <div className="pt-2 text-sm text-center text-slate-400">
                 Sudah punya akun?{" "}
-                <Link to="/login" className="underline underline-offset-4">
+                <Link to="/login" className="font-semibold text-blue-400 underline hover:text-blue-300 underline-offset-4">
                   Masuk
                 </Link>
               </div>
@@ -148,6 +156,7 @@ export function RegisterForm({ className, ...props }) {
           </form>
         </CardContent>
       </Card>
-    </div>
-  );
+      
+    </motion.div>
+  )
 }
