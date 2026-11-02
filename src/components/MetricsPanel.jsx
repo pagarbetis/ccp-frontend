@@ -13,6 +13,7 @@ import {
 import { api } from "@/lib/api";
 import { formatNumber, todayString } from "@/lib/utils";
 import React from "react";
+import { BarChart3 } from "lucide-react";
 
 const COUNT_FIELDS = [
   { name: "viewsCount", label: "Views" },
@@ -29,11 +30,9 @@ const emptyForm = () => ({
   sharesCount: "",
 });
 
-// Helper aman untuk format tanggal YYYY-MM-DD tanpa geser timezone
 function safeFormatDate(dateStr) {
   if (!dateStr) return "-";
   try {
-    // Jika formatnya YYYY-MM-DD
     const parts = dateStr.split("T")[0].split("-");
     if (parts.length === 3) {
       const [year, month, day] = parts;
@@ -59,9 +58,11 @@ export default function MetricsPanel({
 
   if (!isPublished) {
     return (
-      <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
+      <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold text-white">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold text-white">
+            <BarChart3 className="w-5 h-5 text-blue-400" />
             Metrik Performa
           </CardTitle>
           <CardDescription className="text-slate-400">
@@ -94,7 +95,6 @@ export default function MetricsPanel({
 
       const metric = await api.addMetric(contentId, payload);
 
-      // Urutkan dari tanggal terbaru pakai recordedAt
       onChange(
         [metric, ...metrics].sort((a, b) => {
           const dateA = a.recordedAt || a.recorded_at || "";
@@ -114,9 +114,11 @@ export default function MetricsPanel({
   }
 
   return (
-    <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold text-white">
+    <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
+      <CardHeader className="pb-4 mb-4 border-b border-slate-800/60">
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
+          <BarChart3 className="w-5 h-5 text-blue-400" />
           Metrik Performa
         </CardTitle>
         <CardDescription className="text-slate-400">
@@ -137,7 +139,7 @@ export default function MetricsPanel({
               type="date"
               value={form.recordedAt}
               onChange={(e) => setForm({ ...form, recordedAt: e.target.value })}
-              className="h-10 border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500"
+              className="h-10 border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500 rounded-xl"
             />
           </Field>
           {COUNT_FIELDS.map((field) => (
@@ -155,31 +157,30 @@ export default function MetricsPanel({
                 onChange={(e) =>
                   setForm({ ...form, [field.name]: e.target.value })
                 }
-                className="h-10 border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500"
+                className="h-10 border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500 rounded-xl"
               />
             </Field>
           ))}
-          <div className="col-span-2 pt-2 sm:col-span-5">
+          <div className="flex justify-end col-span-2 pt-2 sm:col-span-5">
             <Button
               type="submit"
-              variant="outline"
               disabled={saving}
-              className="h-10 px-6 font-medium border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-700 hover:text-white"
+              className="px-6 font-medium text-white bg-blue-600 shadow-xl hover:bg-blue-500 shadow-blue-600/30 h-11 rounded-xl transition-all hover:scale-[1.02]"
             >
               {saving ? "Menyimpan..." : "Catat metrik"}
             </Button>
           </div>
         </form>
 
-        <div className="overflow-x-auto border rounded-xl border-slate-800 bg-slate-950/60">
+        <div className="overflow-x-auto border shadow-inner rounded-2xl border-slate-800/80 bg-slate-950/50">
           <table className="w-full text-sm">
-            <thead className="text-left border-b border-slate-800 bg-slate-900/90 text-slate-400">
+            <thead className="text-left border-b border-slate-800/80 bg-slate-900/90 text-slate-400">
               <tr>
-                <th className="px-3.5 py-3 font-semibold">Tanggal</th>
+                <th className="px-4 py-3 font-semibold">Tanggal</th>
                 {COUNT_FIELDS.map((field) => (
                   <th
                     key={field.name}
-                    className="px-3.5 py-3 text-right font-semibold"
+                    className="px-4 py-3 font-semibold text-right"
                   >
                     {field.label}
                   </th>
@@ -194,7 +195,7 @@ export default function MetricsPanel({
                     key={metric.id}
                     className="transition-colors hover:bg-slate-800/30"
                   >
-                    <td className="px-3.5 py-3 text-slate-300">
+                    <td className="px-4 py-3 text-slate-300">
                       {safeFormatDate(recDate)}
                     </td>
                     {COUNT_FIELDS.map((field) => {
@@ -205,7 +206,7 @@ export default function MetricsPanel({
                       return (
                         <td
                           key={field.name}
-                          className="px-3.5 py-3 text-right tabular-nums text-slate-200"
+                          className="px-4 py-3 text-right tabular-nums text-slate-200"
                         >
                           {formatNumber(val)}
                         </td>
@@ -217,7 +218,7 @@ export default function MetricsPanel({
             </tbody>
           </table>
           {metrics.length === 0 && (
-            <p className="px-4 py-8 text-sm text-center text-slate-500">
+            <p className="px-4 py-8 text-sm italic text-center text-slate-500">
               Belum ada catatan. Isi angka dari dashboard platform secara
               berkala.
             </p>

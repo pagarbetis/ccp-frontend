@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import React from "react";
+import { FilePlus } from "lucide-react";
 
 const EMPTY_VALUES = {
   title: "",
@@ -83,7 +84,7 @@ export default function NewContentPage() {
   return (
     <div className="max-w-3xl space-y-6 text-slate-100">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
           Konten baru
         </h1>
         <p className="mt-1 text-sm text-slate-400">
@@ -92,8 +93,9 @@ export default function NewContentPage() {
       </div>
 
       {channels.length === 0 ? (
-        <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
-          <CardContent className="pt-6">
+        <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
+          <CardContent className="pt-8 pb-8">
             <p className="text-sm text-slate-300">
               Kamu belum punya channel.{" "}
               <Link
@@ -107,9 +109,11 @@ export default function NewContentPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-white">
+        <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
+          <CardHeader className="pb-4 mb-4 border-b border-slate-800/60">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
+              <FilePlus className="w-5 h-5 text-blue-400" />
               Formulir Ide Konten
             </CardTitle>
             <CardDescription className="text-slate-400">
@@ -125,23 +129,23 @@ export default function NewContentPage() {
                 channels={channels}
                 editors={editors}
               />
-              <div className="flex gap-3 mt-8">
-                <Button
-                  type="submit"
-                  disabled={saving}
-                  className="px-6 font-medium text-white bg-blue-600 shadow-lg hover:bg-blue-500 shadow-blue-600/25 h-11"
-                >
-                  {saving ? "Menyimpan..." : "Simpan ide"}
-                </Button>
+              <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-slate-800/60">
                 <Link
                   to="/contents"
                   className={
                     buttonVariants({ variant: "outline" }) +
-                    " border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-700 hover:text-white h-11 px-6"
+                    " border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-700 hover:text-white h-11 px-6 rounded-xl transition-all"
                   }
                 >
                   Batal
                 </Link>
+                <Button
+                  type="submit"
+                  disabled={saving}
+                  className="px-6 font-medium text-white bg-blue-600 shadow-xl hover:bg-blue-500 shadow-blue-600/30 h-11 rounded-xl transition-all hover:scale-[1.02]"
+                >
+                  {saving ? "Menyimpan..." : "Simpan ide"}
+                </Button>
               </div>
             </form>
           </CardContent>

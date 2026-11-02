@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, PlaySquare, FileText, ExternalLink } from "lucide-react";
+import { ArrowLeft, PlaySquare, FileText, ExternalLink, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { InstagramEmbed } from "react-social-media-embed";
 
@@ -33,13 +33,13 @@ function toFormValues(content) {
   const pubUrl = content.published_url ?? content.publishedUrl ?? "";
   return {
     title: content.title || "",
-    channel_id: content.channel_id ? String(content.channel_id) : "",
-    editor_id: content.editor_id ? String(content.editor_id) : "",
-    format_type: content.format_type || "",
+    channel_id: content.channel_id ? String(content.channel_id) : (content.channelId ? String(content.channelId) : ""),
+    editor_id: content.editor_id ? String(content.editor_id) : (content.editorId ? String(content.editorId) : ""),
+    format_type: content.format_type || content.formatType || "",
     priority: content.priority || "sedang",
-    scheduled_date: content.scheduled_date ?? "",
+    scheduled_date: content.scheduled_date ?? content.scheduledDate ?? "",
     description: content.description ?? "",
-    script_draft: content.script_draft ?? "",
+    script_draft: content.script_draft ?? content.scriptDraft ?? "",
     published_url: pubUrl,
   };
 }
@@ -100,7 +100,6 @@ function TikTokPlayer({ url, title }) {
     fetchOEmbed();
   }, [url]);
 
-  // Inject script embed TikTok jika HTML oEmbed berhasil dimuat
   useEffect(() => {
     if (embedHtml) {
       let scriptTag = document.querySelector(
@@ -244,6 +243,7 @@ export default function ContentDetailPage() {
   const nextStage = NEXT_STAGE[content.status];
   const canAdvance = nextStage && canTransition(user, content, nextStage);
   const isPublished = content.status === "published";
+  const isReadyOrPublished = content.status === "ready" || isPublished;
 
   const activePublishedUrl =
     content.published_url || content.publishedUrl || values.published_url;
@@ -318,42 +318,77 @@ export default function ContentDetailPage() {
         className={`grid gap-6 ${isPublished ? "lg:grid-cols-1" : "lg:grid-cols-[1fr_24rem]"}`}
       >
         <div className="space-y-6">
-          {isPublished && (
+          {/* LINK POSTINGAN / RINGKASAN PUBLIKASI DIPINDAH KE ATAS */}
+          {isReadyOrPublished && (
             <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-white">
-                  Ringkasan Publikasi
+              <CardHeader className="pb-4 mb-4 border-b border-slate-800/60">
+                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
+                  <Link2 className="w-5 h-5 text-blue-400" />
+                  {isPublished ? "Ringkasan Publikasi" : "Tautan Postingan"}
                 </CardTitle>
                 <CardDescription className="text-slate-400">
-                  Informasi utama konten yang telah tayang
+                  {isPublished
+                    ? "Informasi utama konten yang telah tayang"
+                    : "Wajib diisi sebelum konten ditandai Tayang"}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-4 sm:grid-cols-2">
-                <div className="p-4 border rounded-2xl bg-slate-950/50 border-slate-800/60">
-                  <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-400">
-                    Judul
-                  </span>
-                  <p className="mt-1 text-sm font-semibold text-white">
-                    {content.title}
-                  </p>
-                </div>
-                <div className="p-4 border rounded-2xl bg-slate-950/50 border-slate-800/60">
-                  <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-400">
-                    Channel Tujuan
-                  </span>
-                  <p className="mt-1 text-sm font-semibold text-white">
-                    {currentChannel
-                      ? `${labelOf(PLATFORMS, currentChannel.platform)} ${currentChannel.handle_name || currentChannel.handleName || ""}`
-                      : "-"}
-                  </p>
-                </div>
+              <CardContent className="space-y-4">
+                {isPublished ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="p-4 border rounded-2xl bg-slate-950/50 border-slate-800/60">
+                      <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+                        Judul
+                      </span>
+                      <p className="mt-1 text-sm font-semibold text-white">
+                        {content.title}
+                      </p>
+                    </div>
+                    <div className="p-4 border rounded-2xl bg-slate-950/50 border-slate-800/60">
+                      <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+                        Channel Tujuan
+                      </span>
+                      <p className="mt-1 text-sm font-semibold text-white">
+                        {currentChannel
+                          ? `${labelOf(PLATFORMS, currentChannel.platform)} ${currentChannel.handle_name || currentChannel.handleName || ""}`
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-200">
+                        Link postingan platform
+                      </label>
+                      <div className="flex gap-3">
+                        <input
+                          type="url"
+                          value={values.published_url || ""}
+                          onChange={(e) => changeValue("published_url", e.target.value)}
+                          placeholder="https://"
+                          disabled={isEditor}
+                          className="flex w-full px-3 py-2 text-sm border h-11 rounded-xl border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        />
+                        {!isEditor && (
+                          <Button
+                            type="submit"
+                            disabled={saving}
+                            className="px-6 font-medium text-white bg-blue-600 shadow-xl hover:bg-blue-500 shadow-blue-600/30 h-11 rounded-xl transition-all hover:scale-[1.02]"
+                          >
+                            {saving ? "Menyimpan..." : "Simpan Link"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </form>
+                )}
               </CardContent>
             </Card>
           )}
 
           {!isPublished && (
-            <Card className="relative overflow-visible shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+            <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
               <CardHeader className="pb-4 mb-4 border-b border-slate-800/60">
                 <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
@@ -373,7 +408,7 @@ export default function ContentDetailPage() {
                     channels={channels}
                     editors={isEditor ? undefined : editors}
                     readOnly={isEditor}
-                    showPublishedUrl={content.status === "ready"}
+                    showPublishedUrl={false} // Udah dipindah ke atas
                   />
                   {!isEditor && (
                     <div className="flex justify-end pt-6 mt-6 border-t border-slate-800/60">

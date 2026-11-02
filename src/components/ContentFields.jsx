@@ -30,10 +30,8 @@ export default function ContentFields({
   readOnly,
   showPublishedUrl,
 }) {
-  // Helper untuk shadcn Select onValueChange (menerima langsung valuenya)
   const set = (name) => (value) => onChange(name, value);
 
-  // Parse string YYYY-MM-DD ke objek Date dengan aman
   let dateValue = undefined;
   if (values.scheduled_date) {
     const parsed = parseISO(values.scheduled_date);
@@ -41,13 +39,14 @@ export default function ContentFields({
   }
 
   return (
-    <fieldset disabled={readOnly} className="min-w-0 space-y-5">
+    <div className="min-w-0 space-y-5">
       <Field label="Judul" error={errors.title}>
         <Input
           value={values.title || ""}
           onChange={(e) => onChange("title", e.target.value)}
+          readOnly={readOnly}
           placeholder="Contoh: 5 kesalahan pemula saat editing"
-          className="h-10 border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500"
+          className="h-10 border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500 disabled:opacity-100"
         />
       </Field>
 
@@ -56,6 +55,7 @@ export default function ContentFields({
           <Select
             value={values.channel_id ? String(values.channel_id) : ""}
             onValueChange={set("channel_id")}
+            disabled={readOnly}
           >
             <SelectTrigger className="h-10 border-slate-700 bg-slate-950 text-slate-100 focus:ring-blue-500">
               <SelectValue placeholder="Pilih channel" />
@@ -79,6 +79,7 @@ export default function ContentFields({
           <Select
             value={values.format_type || ""}
             onValueChange={set("format_type")}
+            disabled={readOnly}
           >
             <SelectTrigger className="h-10 border-slate-700 bg-slate-950 text-slate-100 focus:ring-blue-500">
               <SelectValue placeholder="Pilih format" />
@@ -101,6 +102,7 @@ export default function ContentFields({
           <Select
             value={values.priority || "sedang"}
             onValueChange={set("priority")}
+            disabled={readOnly}
           >
             <SelectTrigger className="h-10 border-slate-700 bg-slate-950 text-slate-100 focus:ring-blue-500">
               <SelectValue />
@@ -119,12 +121,12 @@ export default function ContentFields({
           </Select>
         </Field>
 
-        {/* 🔥 CUSTOM POPOVER CALENDAR SHADCN UI */}
         <Field label="Target tanggal tayang" error={errors.scheduled_date}>
           <Popover>
-            <PopoverTrigger asChild>
+            <PopoverTrigger asChild disabled={readOnly}>
               <Button
                 variant="outline"
+                disabled={readOnly}
                 className={cn(
                   "w-full h-10 px-3 justify-between text-left font-normal border-slate-700 bg-slate-950 text-slate-100 hover:bg-slate-900 hover:text-white focus-visible:ring-blue-500",
                   !dateValue && "text-slate-500",
@@ -138,7 +140,7 @@ export default function ContentFields({
                     <span>Pilih tanggal tayang</span>
                   )}
                 </span>
-                {dateValue && (
+                {dateValue && !readOnly && (
                   <span
                     role="button"
                     tabIndex={0}
@@ -153,25 +155,27 @@ export default function ContentFields({
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent
-              className="w-auto p-0 shadow-2xl border-slate-800 bg-slate-900 text-slate-100 rounded-xl"
-              align="start"
-            >
-              <Calendar
-                mode="single"
-                selected={dateValue}
-                onSelect={(selectedDate) => {
-                  if (selectedDate) {
-                    const formatted = format(selectedDate, "yyyy-MM-dd");
-                    onChange("scheduled_date", formatted);
-                  } else {
-                    onChange("scheduled_date", "");
-                  }
-                }}
-                initialFocus
-                className="p-3 bg-slate-900 text-slate-100 rounded-xl"
-              />
-            </PopoverContent>
+            {!readOnly && (
+              <PopoverContent
+                className="w-auto p-0 shadow-2xl border-slate-800 bg-slate-900 text-slate-100 rounded-xl"
+                align="start"
+              >
+                <Calendar
+                  mode="single"
+                  selected={dateValue}
+                  onSelect={(selectedDate) => {
+                    if (selectedDate) {
+                      const formatted = format(selectedDate, "yyyy-MM-dd");
+                      onChange("scheduled_date", formatted);
+                    } else {
+                      onChange("scheduled_date", "");
+                    }
+                  }}
+                  initialFocus
+                  className="p-3 bg-slate-900 text-slate-100 rounded-xl"
+                />
+              </PopoverContent>
+            )}
           </Popover>
         </Field>
 
@@ -179,13 +183,16 @@ export default function ContentFields({
           <Field
             label="Editor"
             error={errors.editor_id}
-            hint="Kosongkan jika kamu mengedit sendiri."
+            hint={
+              readOnly ? undefined : "Kosongkan jika kamu mengedit sendiri."
+            }
           >
             <Select
               value={values.editor_id ? String(values.editor_id) : "none"}
               onValueChange={(val) =>
                 onChange("editor_id", val === "none" ? "" : val)
               }
+              disabled={readOnly}
             >
               <SelectTrigger className="h-10 border-slate-700 bg-slate-950 text-slate-100 focus:ring-blue-500">
                 <SelectValue placeholder="Tanpa editor" />
@@ -216,6 +223,7 @@ export default function ContentFields({
         <Textarea
           value={values.description || ""}
           onChange={(e) => onChange("description", e.target.value)}
+          readOnly={readOnly}
           rows={3}
           className="border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500"
           placeholder="Tuliskan ringkasan ide konten..."
@@ -225,14 +233,21 @@ export default function ContentFields({
       <Field
         label="Naskah"
         error={errors.script_draft}
-        hint={readOnly ? undefined : "Hook, alur cerita, atau naskah lengkap."}
+        hint={
+          readOnly
+            ? "Draf naskah dari pembuat konten (Read-Only)."
+            : "Hook, alur cerita, atau naskah lengkap."
+        }
       >
         <Textarea
           value={values.script_draft || ""}
-          onChange={(e) => onChange("script_draft", e.target.value)}
-          rows={8}
-          className="font-mono text-sm border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500"
-          placeholder="Tulis draf naskah di sini..."
+          onChange={(e) =>
+            !readOnly && onChange("script_draft", e.target.value)
+          }
+          readOnly={readOnly}
+          rows={16}
+          placeholder="Belum ada draf naskah..."
+          className="font-mono text-sm border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500 min-h-[250px]"
         />
       </Field>
 
@@ -246,11 +261,12 @@ export default function ContentFields({
             type="url"
             value={values.published_url || ""}
             onChange={(e) => onChange("published_url", e.target.value)}
+            readOnly={readOnly}
             placeholder="https://"
             className="h-10 border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500"
           />
         </Field>
       )}
-    </fieldset>
+    </div>
   );
 }

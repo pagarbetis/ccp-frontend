@@ -6,7 +6,6 @@ import { RegisterForm } from "@/components/register-form";
 export default function RegisterPage() {
   const { user } = useAuth();
 
-  // Jika user sudah login, lempar langsung ke /contents
   if (user) return <Navigate to="/contents" replace />;
 
   return (

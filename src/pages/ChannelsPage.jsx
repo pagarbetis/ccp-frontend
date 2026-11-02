@@ -21,6 +21,7 @@ import {
 import { api } from "@/lib/api";
 import { PLATFORMS, labelOf } from "@/lib/constants";
 import React from "react";
+import { Tv } from "lucide-react";
 
 const EMPTY_FORM = { platform: "", handle_name: "" };
 
@@ -71,7 +72,7 @@ export default function ChannelsPage() {
   return (
     <div className="max-w-3xl space-y-6 text-slate-100">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
           Channel
         </h1>
         <p className="mt-1 text-sm text-slate-400">
@@ -80,9 +81,11 @@ export default function ChannelsPage() {
         </p>
       </div>
 
-      <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-white">
+      <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
+        <CardHeader className="pb-4 mb-4 border-b border-slate-800/60">
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
+            <Tv className="w-5 h-5 text-blue-400" />
             Daftar Channel
           </CardTitle>
           <CardDescription className="text-slate-400">
@@ -90,9 +93,9 @@ export default function ChannelsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="divide-y divide-slate-800/80">
+          <ul className="px-4 overflow-hidden border divide-y shadow-inner divide-slate-800/60 rounded-2xl border-slate-800/80 bg-slate-950/50">
             {channels.length === 0 && (
-              <li className="py-4 text-sm text-center text-slate-500">
+              <li className="py-8 text-sm italic text-center text-slate-500">
                 Belum ada channel. Tambahkan satu di bawah supaya bisa membuat
                 konten.
               </li>
@@ -100,12 +103,12 @@ export default function ChannelsPage() {
             {channels.map((channel) => (
               <li
                 key={channel.id}
-                className="flex items-baseline justify-between py-3.5"
+                className="flex items-center justify-between py-3.5 first:pt-4 last:pb-4"
               >
-                <span className="font-medium text-slate-100">
+                <span className="font-medium text-slate-200">
                   {channel.handle_name || channel.handleName}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium">
+                <span className="px-3 py-1 text-xs font-semibold border rounded-full bg-slate-800/80 text-slate-300 border-slate-700/60">
                   {labelOf(PLATFORMS, channel.platform)}
                 </span>
               </li>
@@ -114,9 +117,11 @@ export default function ChannelsPage() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-white">
+      <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
+        <CardHeader className="pb-4 mb-4 border-b border-slate-800/60">
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
+            <Tv className="w-5 h-5 text-blue-400" />
             Tambah Channel Baru
           </CardTitle>
           <CardDescription className="text-slate-400">
@@ -137,10 +142,10 @@ export default function ChannelsPage() {
                 value={form.platform}
                 onValueChange={(value) => setForm({ ...form, platform: value })}
               >
-                <SelectTrigger className="border-slate-700 bg-slate-950 text-slate-100 focus:ring-blue-500 h-11">
+                <SelectTrigger className="border-slate-700 bg-slate-950 text-slate-100 focus:ring-blue-500 h-11 rounded-xl">
                   <SelectValue placeholder="Pilih platform" />
                 </SelectTrigger>
-                <SelectContent className="border-slate-800 bg-slate-900 text-slate-100">
+                <SelectContent className="border-slate-800 bg-slate-900 text-slate-100 rounded-xl">
                   {PLATFORMS.map((p) => (
                     <SelectItem
                       key={p.value}
@@ -164,16 +169,18 @@ export default function ChannelsPage() {
                 onChange={(e) =>
                   setForm({ ...form, handle_name: e.target.value })
                 }
-                className="border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-500 focus-visible:ring-blue-500 h-11"
+                className="border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500 h-11 rounded-xl"
               />
             </Field>
-            <Button
-              type="submit"
-              disabled={saving}
-              className="sm:mt-[1.625rem] bg-blue-600 hover:bg-blue-500 text-white font-medium shadow-lg shadow-blue-600/25 h-11 px-6"
-            >
-              {saving ? "Menambahkan..." : "Tambah channel"}
-            </Button>
+            <div className="flex sm:mt-[1.625rem]">
+              <Button
+                type="submit"
+                disabled={saving}
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-medium shadow-xl shadow-blue-600/30 h-11 px-6 rounded-xl transition-all hover:scale-[1.02]"
+              >
+                {saving ? "Menambahkan..." : "Tambah channel"}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
