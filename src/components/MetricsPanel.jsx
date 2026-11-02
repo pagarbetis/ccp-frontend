@@ -3,9 +3,15 @@ import { toast } from "sonner";
 import Field from "@/components/Field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { api } from "@/lib/api";
-import { formatDate, formatNumber, todayString } from "@/lib/utils";
+import { formatNumber, todayString } from "@/lib/utils";
 import React from "react";
 
 const COUNT_FIELDS = [
@@ -23,7 +29,30 @@ const emptyForm = () => ({
   sharesCount: "",
 });
 
-export default function MetricsPanel({ contentId, isPublished, metrics = [], onChange }) {
+// Helper aman untuk format tanggal YYYY-MM-DD tanpa geser timezone
+function safeFormatDate(dateStr) {
+  if (!dateStr) return "-";
+  try {
+    // Jika formatnya YYYY-MM-DD
+    const parts = dateStr.split("T")[0].split("-");
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      return `${day}/${month}/${year}`;
+    }
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString("id-ID");
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+export default function MetricsPanel({
+  contentId,
+  isPublished,
+  metrics = [],
+  onChange,
+}) {
   const [form, setForm] = useState(emptyForm());
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
@@ -32,8 +61,12 @@ export default function MetricsPanel({ contentId, isPublished, metrics = [], onC
     return (
       <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold text-white">Metrik Performa</CardTitle>
-          <CardDescription className="text-slate-400">Riwayat performa konten</CardDescription>
+          <CardTitle className="text-base font-semibold text-white">
+            Metrik Performa
+          </CardTitle>
+          <CardDescription className="text-slate-400">
+            Riwayat performa konten
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="py-2 text-sm text-slate-500">
@@ -54,18 +87,21 @@ export default function MetricsPanel({ contentId, isPublished, metrics = [], onC
         recordedAt: form.recordedAt,
         viewsCount: form.viewsCount === "" ? 0 : Number(form.viewsCount),
         likesCount: form.likesCount === "" ? 0 : Number(form.likesCount),
-        commentsCount: form.commentsCount === "" ? 0 : Number(form.commentsCount),
+        commentsCount:
+          form.commentsCount === "" ? 0 : Number(form.commentsCount),
         sharesCount: form.sharesCount === "" ? 0 : Number(form.sharesCount),
       };
 
       const metric = await api.addMetric(contentId, payload);
-      
+
       // Urutkan dari tanggal terbaru pakai recordedAt
-      onChange([metric, ...metrics].sort((a, b) => {
-        const dateA = a.recordedAt || a.recorded_at || "";
-        const dateB = b.recordedAt || b.recorded_at || "";
-        return dateB.localeCompare(dateA);
-      }));
+      onChange(
+        [metric, ...metrics].sort((a, b) => {
+          const dateA = a.recordedAt || a.recorded_at || "";
+          const dateB = b.recordedAt || b.recorded_at || "";
+          return dateB.localeCompare(dateA);
+        }),
+      );
 
       setForm(emptyForm());
       toast.success("Metrik berhasil disimpan ke database!");
@@ -80,12 +116,23 @@ export default function MetricsPanel({ contentId, isPublished, metrics = [], onC
   return (
     <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold text-white">Metrik Performa</CardTitle>
-        <CardDescription className="text-slate-400">Catat dan pantau perkembangan metrik konten secara berkala</CardDescription>
+        <CardTitle className="text-base font-semibold text-white">
+          Metrik Performa
+        </CardTitle>
+        <CardDescription className="text-slate-400">
+          Catat dan pantau perkembangan metrik konten secara berkala
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <form onSubmit={handleSubmit} className="grid items-end grid-cols-2 gap-3 sm:grid-cols-5">
-          <Field label="Tanggal" error={errors.recordedAt || errors.recorded_at} className="text-slate-300">
+        <form
+          onSubmit={handleSubmit}
+          className="grid items-end grid-cols-2 gap-3 sm:grid-cols-5"
+        >
+          <Field
+            label="Tanggal"
+            error={errors.recordedAt || errors.recorded_at}
+            className="text-slate-300"
+          >
             <Input
               type="date"
               value={form.recordedAt}
@@ -94,21 +141,28 @@ export default function MetricsPanel({ contentId, isPublished, metrics = [], onC
             />
           </Field>
           {COUNT_FIELDS.map((field) => (
-            <Field key={field.name} label={field.label} error={errors[field.name]} className="text-slate-300">
+            <Field
+              key={field.name}
+              label={field.label}
+              error={errors[field.name]}
+              className="text-slate-300"
+            >
               <Input
                 type="number"
                 min="0"
                 placeholder="0"
                 value={form[field.name]}
-                onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, [field.name]: e.target.value })
+                }
                 className="h-10 border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500"
               />
             </Field>
           ))}
           <div className="col-span-2 pt-2 sm:col-span-5">
-            <Button 
-              type="submit" 
-              variant="outline" 
+            <Button
+              type="submit"
+              variant="outline"
               disabled={saving}
               className="h-10 px-6 font-medium border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-700 hover:text-white"
             >
@@ -123,7 +177,12 @@ export default function MetricsPanel({ contentId, isPublished, metrics = [], onC
               <tr>
                 <th className="px-3.5 py-3 font-semibold">Tanggal</th>
                 {COUNT_FIELDS.map((field) => (
-                  <th key={field.name} className="px-3.5 py-3 text-right font-semibold">{field.label}</th>
+                  <th
+                    key={field.name}
+                    className="px-3.5 py-3 text-right font-semibold"
+                  >
+                    {field.label}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -131,12 +190,23 @@ export default function MetricsPanel({ contentId, isPublished, metrics = [], onC
               {metrics.map((metric) => {
                 const recDate = metric.recordedAt || metric.recorded_at;
                 return (
-                  <tr key={metric.id} className="transition-colors hover:bg-slate-800/30">
-                    <td className="px-3.5 py-3 text-slate-300">{recDate ? formatDate(recDate) : "-"}</td>
+                  <tr
+                    key={metric.id}
+                    className="transition-colors hover:bg-slate-800/30"
+                  >
+                    <td className="px-3.5 py-3 text-slate-300">
+                      {safeFormatDate(recDate)}
+                    </td>
                     {COUNT_FIELDS.map((field) => {
-                      const val = metric[field.name] ?? metric[field.name.replace('Count', '_count')] ?? 0;
+                      const val =
+                        metric[field.name] ??
+                        metric[field.name.replace("Count", "_count")] ??
+                        0;
                       return (
-                        <td key={field.name} className="px-3.5 py-3 text-right tabular-nums text-slate-200">
+                        <td
+                          key={field.name}
+                          className="px-3.5 py-3 text-right tabular-nums text-slate-200"
+                        >
                           {formatNumber(val)}
                         </td>
                       );
@@ -148,7 +218,8 @@ export default function MetricsPanel({ contentId, isPublished, metrics = [], onC
           </table>
           {metrics.length === 0 && (
             <p className="px-4 py-8 text-sm text-center text-slate-500">
-              Belum ada catatan. Isi angka dari dashboard platform secara berkala.
+              Belum ada catatan. Isi angka dari dashboard platform secara
+              berkala.
             </p>
           )}
         </div>
