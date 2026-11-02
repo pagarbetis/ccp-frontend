@@ -13,8 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 
-// Tombol "Hapus konten" + jendela konfirmasi.
-// Penghapusan sungguhan dikerjakan `onConfirm` dari halaman pemanggil.
+
 export default function DeleteContentDialog({ content, onConfirm }) {
   return (
     <AlertDialog>

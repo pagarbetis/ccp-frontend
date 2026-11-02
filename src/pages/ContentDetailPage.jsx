@@ -1,18 +1,16 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, PlaySquare, ExternalLink, Video } from "lucide-react";
+import { ArrowLeft, PlaySquare, FileText, ExternalLink, Link2 } from "lucide-react";
 import { toast } from "sonner";
+import { InstagramEmbed } from "react-social-media-embed";
 
 import Checklist from "@/components/Checklist";
 import DeleteContentDialog from "@/components/DeleteContentDialog";
 import MetricsPanel from "@/components/MetricsPanel";
 import ReviewPanel from "@/components/ReviewPanel";
 import StageBar from "@/components/StageBar";
-import Field from "@/components/Field";
+import ContentFields from "@/components/ContentFields";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { NativeSelect as Select } from "@/components/ui/native-select";
 import {
   Card,
   CardContent,
@@ -22,9 +20,8 @@ import {
 } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
-import { labelOf, STAGES, canTransition, PLATFORMS, FORMATS, PRIORITIES } from "@/lib/constants";
+import { labelOf, STAGES, canTransition, PLATFORMS } from "@/lib/constants";
 
-// Tahap berikutnya yang dipindah dengan tombol biasa.
 const NEXT_STAGE = {
   idea: "scripting",
   scripting: "recording",
@@ -32,18 +29,17 @@ const NEXT_STAGE = {
   ready: "published",
 };
 
-// Data dari API -> nilai form
 function toFormValues(content) {
   const pubUrl = content.published_url ?? content.publishedUrl ?? "";
   return {
     title: content.title || "",
-    channel_id: content.channel_id ? String(content.channel_id) : "",
-    editor_id: content.editor_id ? String(content.editor_id) : "",
-    format_type: content.format_type || "",
+    channel_id: content.channel_id ? String(content.channel_id) : (content.channelId ? String(content.channelId) : ""),
+    editor_id: content.editor_id ? String(content.editor_id) : (content.editorId ? String(content.editorId) : ""),
+    format_type: content.format_type || content.formatType || "",
     priority: content.priority || "sedang",
-    scheduled_date: content.scheduled_date ?? "",
+    scheduled_date: content.scheduled_date ?? content.scheduledDate ?? "",
     description: content.description ?? "",
-    script_draft: content.script_draft ?? "",
+    script_draft: content.script_draft ?? content.scriptDraft ?? "",
     published_url: pubUrl,
   };
 }
@@ -52,164 +48,110 @@ function getEmbedDetails(url) {
   if (!url) return { type: null, embedUrl: null };
   try {
     const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname.toLowerCase();
 
-    // 1. Cek YouTube (Support Iframe)
-    if (parsedUrl.hostname.includes("youtube.com")) {
-      const videoId = parsedUrl.searchParams.get("v");
+    if (hostname.includes("youtube.com") || hostname.includes("youtu.be")) {
+      const videoId = hostname.includes("youtu.be")
+        ? parsedUrl.pathname.slice(1)
+        : parsedUrl.searchParams.get("v");
       return {
         type: "youtube",
-        embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}` : null,
-      };
-    } else if (parsedUrl.hostname.includes("youtu.be")) {
-      const videoId = parsedUrl.pathname.slice(1);
-      return {
-        type: "youtube",
-        embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}` : null,
+        embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}` : url,
       };
     }
 
-    // 2. Cek TikTok
-    if (parsedUrl.hostname.includes("tiktok.com") || parsedUrl.hostname.includes("vm.tiktok.com")) {
-      return {
-        type: "tiktok",
-        embedUrl: url,
-      };
+    if (hostname.includes("tiktok.com") || url.includes("tiktok.com")) {
+      return { type: "tiktok", embedUrl: url };
     }
 
-    // 3. Cek Instagram (Reels / Postingan)
-    if (parsedUrl.hostname.includes("instagram.com")) {
-      return {
-        type: "instagram",
-        embedUrl: url,
-      };
+    if (hostname.includes("instagram.com") || hostname.includes("instagr.am")) {
+      return { type: "instagram", embedUrl: url };
     }
   } catch (e) {
-    return { type: null, embedUrl: null };
+    if (url.includes("tiktok.com")) {
+      return { type: "tiktok", embedUrl: url };
+    }
   }
   return { type: null, embedUrl: null };
 }
 
-// Komponen form lokal
-function ContentFields({ values = {}, onChange, errors = {}, channels = [], editors, readOnly, showPublishedUrl }) {
-  const set = (name) => (event) => onChange(name, event.target.value);
+function TikTokPlayer({ url, title }) {
+  const [embedHtml, setEmbedHtml] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchOEmbed() {
+      if (!url) return;
+      setLoading(true);
+      try {
+        const cleanUrl = url.match(/(https?:\/\/[^\s]+)/)?.[1] || url;
+        const res = await fetch(
+          `https://www.tiktok.com/oembed?url=${encodeURIComponent(cleanUrl)}`,
+        );
+        const data = await res.json();
+        if (data && data.html) {
+          setEmbedHtml(data.html);
+        }
+      } catch (e) {
+        console.error("Gagal memuat TikTok oEmbed", e);
+      }
+      setLoading(false);
+    }
+    fetchOEmbed();
+  }, [url]);
+
+  useEffect(() => {
+    if (embedHtml) {
+      let scriptTag = document.querySelector(
+        'script[src="https://www.tiktok.com/embed.js"]',
+      );
+      if (!scriptTag) {
+        scriptTag = document.createElement("script");
+        scriptTag.src = "https://www.tiktok.com/embed.js";
+        scriptTag.async = true;
+        document.body.appendChild(scriptTag);
+      } else if (window.tiktok && window.tiktok.embed) {
+        try {
+          window.tiktok.embed.lib.render();
+        } catch (err) {}
+      }
+    }
+  }, [embedHtml]);
 
   return (
-    <fieldset disabled={readOnly} className="min-w-0 space-y-5">
-      <Field label="Judul" error={errors.title}>
-        <Input 
-          value={values.title || ""} 
-          onChange={set("title")} 
-          placeholder="Contoh: 5 kesalahan pemula saat editing" 
-          className="h-10 border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500"
+    <div className="flex flex-col items-center justify-center w-full overflow-y-auto border rounded-2xl bg-slate-950 border-slate-800/80 p-4 min-h-[580px] shadow-inner">
+      {loading ? (
+        <p className="text-sm text-slate-400 animate-pulse">
+          Memuat pemutar TikTok...
+        </p>
+      ) : embedHtml ? (
+        <div
+          className="flex justify-center w-full overflow-hidden"
+          dangerouslySetInnerHTML={{ __html: embedHtml }}
         />
-      </Field>
-
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Channel tujuan" error={errors.channel_id}>
-          <Select 
-            value={values.channel_id || ""} 
-            onChange={set("channel_id")}
-            className="h-10 border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500"
+      ) : (
+        <div className="flex flex-col items-center justify-center p-6 space-y-4 text-center">
+          <div className="flex items-center justify-center w-12 h-12 text-blue-400 border rounded-2xl bg-blue-500/10 border-blue-500/20">
+            <PlaySquare className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-white">
+              {title || "Video TikTok"}
+            </p>
+            <p className="max-w-xs text-xs truncate text-slate-400">{url}</p>
+          </div>
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-all shadow-lg shadow-blue-600/30 cursor-pointer"
           >
-            <option value="" className="bg-slate-900 text-slate-400">Pilih channel</option>
-            {channels.map((channel) => (
-              <option key={channel.id} value={channel.id} className="bg-slate-900 text-slate-100">
-                {labelOf(PLATFORMS, channel.platform)} {channel.handle_name}
-              </option>
-            ))}
-          </Select>
-        </Field>
-
-        <Field label="Format" error={errors.format_type}>
-          <Select 
-            value={values.format_type || ""} 
-            onChange={set("format_type")}
-            className="h-10 border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500"
-          >
-            <option value="" className="bg-slate-900 text-slate-400">Pilih format</option>
-            {FORMATS.map((format) => (
-              <option key={format.value} value={format.value} className="bg-slate-900 text-slate-100">{format.label}</option>
-            ))}
-          </Select>
-        </Field>
-
-        <Field label="Prioritas" error={errors.priority}>
-          <Select 
-            value={values.priority || "sedang"} 
-            onChange={set("priority")}
-            className="h-10 border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500"
-          >
-            {PRIORITIES.map((priority) => (
-              <option key={priority.value} value={priority.value} className="bg-slate-900 text-slate-100">{priority.label}</option>
-            ))}
-          </Select>
-        </Field>
-
-        <Field label="Target tanggal tayang" error={errors.scheduled_date}>
-          <Input 
-            type="date" 
-            value={values.scheduled_date || ""} 
-            onChange={set("scheduled_date")} 
-            className="h-10 border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500"
-          />
-        </Field>
-
-        {editors && (
-          <Field
-            label="Editor"
-            error={errors.editor_id}
-            hint="Kosongkan jika kamu mengedit sendiri."
-          >
-            <Select 
-              value={values.editor_id || ""} 
-              onChange={set("editor_id")}
-              className="h-10 border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500"
-            >
-              <option value="" className="bg-slate-900 text-slate-400">Tanpa editor</option>
-              {editors.map((editor) => (
-                <option key={editor.id} value={editor.id} className="bg-slate-900 text-slate-100">{editor.name}</option>
-              ))}
-            </Select>
-          </Field>
-        )}
-      </div>
-
-      <Field label="Konsep singkat" error={errors.description}>
-        <Textarea 
-          value={values.description || ""} 
-          onChange={set("description")} 
-          rows={3} 
-          className="border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500"
-          placeholder="Tuliskan ringkasan ide konten..."
-        />
-      </Field>
-
-      <Field label="Naskah" error={errors.script_draft} hint={readOnly ? undefined : "Hook, alur cerita, atau naskah lengkap."}>
-        <Textarea 
-          value={values.script_draft || ""} 
-          onChange={set("script_draft")} 
-          rows={8} 
-          className="font-mono text-sm border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500"
-          placeholder="Tulis draf naskah di sini..."
-        />
-      </Field>
-
-      {showPublishedUrl && (
-        <Field
-          label="Link postingan"
-          error={errors.published_url}
-          hint="Wajib diisi sebelum konten ditandai Tayang."
-        >
-          <Input
-            type="url"
-            value={values.published_url || ""}
-            onChange={set("published_url")}
-            placeholder="https://"
-            className="h-10 border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500"
-          />
-        </Field>
+            <span>Buka Video di TikTok</span>
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </div>
       )}
-    </fieldset>
+    </div>
   );
 }
 
@@ -249,10 +191,13 @@ export default function ContentDetailPage() {
   }, [loadData]);
 
   if (!content || !values)
-    return <p className="px-4 py-12 text-center text-slate-400">Memuat konten...</p>;
+    return (
+      <p className="px-4 py-12 text-center text-slate-400">
+        Memuat detail konten...
+      </p>
+    );
 
   const changeValue = (name, value) => setValues({ ...values, [name]: value });
-
   const applyUpdate = (updated) =>
     setContent((previous) => ({ ...previous, ...updated }));
 
@@ -298,42 +243,55 @@ export default function ContentDetailPage() {
   const nextStage = NEXT_STAGE[content.status];
   const canAdvance = nextStage && canTransition(user, content, nextStage);
   const isPublished = content.status === "published";
-  
-  const activePublishedUrl = content.published_url || content.publishedUrl || values.published_url;
+  const isReadyOrPublished = content.status === "ready" || isPublished;
+
+  const activePublishedUrl =
+    content.published_url || content.publishedUrl || values.published_url;
   const { type: embedType, embedUrl } = getEmbedDetails(activePublishedUrl);
-  
+
   const targetChannelId = values?.channel_id || content.channel_id;
-  const currentChannel = channels.find((c) => String(c.id) === String(targetChannelId)) || content.channel;
+  const currentChannel =
+    channels.find((c) => String(c.id) === String(targetChannelId)) ||
+    content.channel;
 
   return (
-    <div className="space-y-6 text-slate-100">
+    <div className="pb-12 mx-auto space-y-6 text-slate-100 max-w-7xl">
       {/* Top Nav & Action Header */}
-      <div>
+      <div className="flex flex-col gap-2">
         <Link
           to="/contents"
-          className="inline-flex items-center gap-1.5 mb-3 text-sm text-slate-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-white transition-colors w-fit"
         >
           <ArrowLeft className="w-4 h-4" />
-          Semua konten
+          Kembali ke daftar konten
         </Link>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            {content.title}
-          </h1>
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
+          <div className="space-y-1">
+            <span className="text-xs font-semibold tracking-wider text-blue-400 uppercase">
+              Detail Produksi
+            </span>
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl line-clamp-1">
+              {content.title}
+            </h1>
+          </div>
           {!isEditor && (
             <DeleteContentDialog content={content} onConfirm={handleDelete} />
           )}
         </div>
       </div>
 
-      {/* Stage Progress Card */}
-      <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
+      {/* Stage Progress Card with Glow Accent */}
+      <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 shadow-blue-950/20 rounded-3xl">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent" />
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold text-white">
-            Status & Progress
+          <CardTitle className="flex items-center gap-2 text-base font-semibold text-white">
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            Status Alur Kerja
           </CardTitle>
-          <CardDescription className="text-slate-400">Tahapan alur kerja konten saat ini</CardDescription>
+          <CardDescription className="text-slate-400">
+            Pantau dan teruskan tahapan produksi konten ke level berikutnya
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center justify-between gap-4">
           <StageBar status={content.status} />
@@ -341,7 +299,7 @@ export default function ContentDetailPage() {
             <Button
               size="sm"
               disabled={saving}
-              className="font-medium text-white bg-blue-600 shadow-md hover:bg-blue-500 shadow-blue-600/30"
+              className="font-medium text-white bg-blue-600 shadow-lg hover:bg-blue-500 shadow-blue-600/30 rounded-xl px-5 h-10 transition-all hover:scale-[1.02]"
               onClick={() =>
                 save(
                   { status: nextStage },
@@ -349,45 +307,97 @@ export default function ContentDetailPage() {
                 )
               }
             >
-              Lanjut ke {labelOf(STAGES, nextStage)}
+              Lanjut ke {labelOf(STAGES, nextStage)} &rarr;
             </Button>
           )}
         </CardContent>
       </Card>
 
-      {/* Main Grid Content */}
-      <div className={`grid gap-6 ${isPublished ? "lg:grid-cols-1" : "lg:grid-cols-[1fr_22rem]"}`}>
+      {/* Main Content Layout */}
+      <div
+        className={`grid gap-6 ${isPublished ? "lg:grid-cols-1" : "lg:grid-cols-[1fr_24rem]"}`}
+      >
         <div className="space-y-6">
-          {/* INFORMASI KONTEN RINGKAS (MUNCUL JIKA PUBLISHED) */}
-          {isPublished && (
-            <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-white">Informasi Konten</CardTitle>
-                <CardDescription className="text-slate-400">Detail ringkas konten yang sudah tayang</CardDescription>
+          {/* LINK POSTINGAN / RINGKASAN PUBLIKASI DIPINDAH KE ATAS */}
+          {isReadyOrPublished && (
+            <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
+              <CardHeader className="pb-4 mb-4 border-b border-slate-800/60">
+                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
+                  <Link2 className="w-5 h-5 text-blue-400" />
+                  {isPublished ? "Ringkasan Publikasi" : "Tautan Postingan"}
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  {isPublished
+                    ? "Informasi utama konten yang telah tayang"
+                    : "Wajib diisi sebelum konten ditandai Tayang"}
+                </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <span className="text-xs font-semibold tracking-wider uppercase text-slate-400">Judul</span>
-                  <p className="text-base font-medium text-white mt-0.5">{content.title}</p>
-                </div>
-                <div>
-                  <span className="text-xs font-semibold tracking-wider uppercase text-slate-400">Channel Tujuan</span>
-                  <p className="text-base font-medium text-white mt-0.5">
-                    {currentChannel 
-                      ? `${labelOf(PLATFORMS, currentChannel.platform)} ${currentChannel.handle_name || currentChannel.handleName || ""}`
-                      : "-"}
-                  </p>
-                </div>
+              <CardContent className="space-y-4">
+                {isPublished ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="p-4 border rounded-2xl bg-slate-950/50 border-slate-800/60">
+                      <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+                        Judul
+                      </span>
+                      <p className="mt-1 text-sm font-semibold text-white">
+                        {content.title}
+                      </p>
+                    </div>
+                    <div className="p-4 border rounded-2xl bg-slate-950/50 border-slate-800/60">
+                      <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+                        Channel Tujuan
+                      </span>
+                      <p className="mt-1 text-sm font-semibold text-white">
+                        {currentChannel
+                          ? `${labelOf(PLATFORMS, currentChannel.platform)} ${currentChannel.handle_name || currentChannel.handleName || ""}`
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-200">
+                        Link postingan platform
+                      </label>
+                      <div className="flex gap-3">
+                        <input
+                          type="url"
+                          value={values.published_url || ""}
+                          onChange={(e) => changeValue("published_url", e.target.value)}
+                          placeholder="https://"
+                          disabled={isEditor}
+                          className="flex w-full px-3 py-2 text-sm border h-11 rounded-xl border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        />
+                        {!isEditor && (
+                          <Button
+                            type="submit"
+                            disabled={saving}
+                            className="px-6 font-medium text-white bg-blue-600 shadow-xl hover:bg-blue-500 shadow-blue-600/30 h-11 rounded-xl transition-all hover:scale-[1.02]"
+                          >
+                            {saving ? "Menyimpan..." : "Simpan Link"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </form>
+                )}
               </CardContent>
             </Card>
           )}
 
-          {/* FORM UTAMA (MUNCUL JIKA BELUM PUBLISHED) */}
           {!isPublished && (
-            <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-white">Detail Konten</CardTitle>
-                <CardDescription className="text-slate-400">Kelola informasi utama dan draf skrip konten</CardDescription>
+            <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
+              <CardHeader className="pb-4 mb-4 border-b border-slate-800/60">
+                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
+                  <FileText className="w-5 h-5 text-blue-400" />
+                  Formulir Detail & Naskah
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Kelola informasi utama dan draf skrip secara terstruktur
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit}>
@@ -398,36 +408,41 @@ export default function ContentDetailPage() {
                     channels={channels}
                     editors={isEditor ? undefined : editors}
                     readOnly={isEditor}
-                    showPublishedUrl={content.status === "ready"}
+                    showPublishedUrl={false} // Udah dipindah ke atas
                   />
                   {!isEditor && (
-                    <Button 
-                      type="submit" 
-                      className="px-6 mt-6 font-medium text-white bg-blue-600 shadow-lg hover:bg-blue-500 shadow-blue-600/25 h-11" 
-                      disabled={saving}
-                    >
-                      {saving ? "Menyimpan..." : "Simpan perubahan"}
-                    </Button>
+                    <div className="flex justify-end pt-6 mt-6 border-t border-slate-800/60">
+                      <Button
+                        type="submit"
+                        className="px-6 font-medium text-white bg-blue-600 shadow-xl hover:bg-blue-500 shadow-blue-600/30 h-11 rounded-xl transition-all hover:scale-[1.02]"
+                        disabled={saving}
+                      >
+                        {saving ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
+                      </Button>
+                    </div>
                   )}
                 </form>
               </CardContent>
             </Card>
           )}
 
-          {/* 🎬 CARD PRATINJAU VIDEO TAYANG (YOUTUBE / TIKTOK / INSTAGRAM) */}
           {isPublished && (
-            <Card className="shadow-xl border-slate-800 bg-slate-900/80 backdrop-blur-xl text-slate-100 shadow-blue-950/20">
-              <CardHeader className="pb-3">
+            <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
+              <CardHeader className="pb-3 mb-4 border-b border-slate-800/60">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold text-white">
                   <PlaySquare className="w-5 h-5 text-blue-400" />
-                  Pratinjau Video Tayang {embedType ? `(${embedType.toUpperCase()})` : ""}
+                  Pratinjau Video Tayang{" "}
+                  {embedType ? `(${embedType.toUpperCase()})` : ""}
                 </CardTitle>
-                <CardDescription className="text-slate-400">Pemutar video otomatis dari tautan publikasi</CardDescription>
+                <CardDescription className="text-slate-400">
+                  Pemutar video otomatis langsung dari tautan publikasi platform
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {embedType === "youtube" ? (
                   <div className="space-y-3">
-                    <div className="relative w-full overflow-hidden border rounded-xl aspect-video bg-slate-950 border-slate-800">
+                    <div className="relative w-full overflow-hidden border shadow-xl rounded-2xl aspect-video bg-slate-950 border-slate-800">
                       <iframe
                         src={embedUrl}
                         title={content.title}
@@ -436,52 +451,60 @@ export default function ContentDetailPage() {
                         allowFullScreen
                       />
                     </div>
-                    <a 
-                      href={activePublishedUrl} 
-                      target="_blank" 
+                    <a
+                      href={activePublishedUrl}
+                      target="_blank"
                       rel="noreferrer"
                       className="block text-xs font-medium text-center text-blue-400 underline truncate hover:text-blue-300"
                     >
                       {activePublishedUrl}
                     </a>
                   </div>
-                ) : embedType === "tiktok" || embedType === "instagram" ? (
-                  <div className="p-6 space-y-4 text-center border rounded-xl border-slate-800 bg-slate-950/70">
-                    <div className="flex items-center justify-center w-12 h-12 mx-auto text-blue-400 border rounded-full bg-slate-900 border-slate-800">
-                      <Video className="w-6 h-6" />
+                ) : embedType === "tiktok" ? (
+                  <div className="space-y-3">
+                    <TikTokPlayer
+                      url={activePublishedUrl}
+                      title={content.title}
+                    />
+                    <a
+                      href={activePublishedUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block text-xs font-medium text-center text-blue-400 underline truncate hover:text-blue-300"
+                    >
+                      {activePublishedUrl}
+                    </a>
+                  </div>
+                ) : embedType === "instagram" ? (
+                  <div className="space-y-3">
+                    <div className="flex justify-center w-full p-2 overflow-hidden border shadow-xl rounded-2xl bg-slate-950 border-slate-800">
+                      <InstagramEmbed url={activePublishedUrl} width={328} />
                     </div>
-                    <div>
-                      <h4 className="text-base font-medium text-white">
-                        {embedType === "tiktok" ? "Video TikTok Publikasi" : "Postingan / Reels Instagram"}
-                      </h4>
-                      <p className="max-w-md mx-auto mt-1 text-xs truncate text-slate-400">{activePublishedUrl}</p>
-                    </div>
-                    <div>
-                      <a 
-                        href={activePublishedUrl} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/25 transition-all"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        Tonton di {embedType === "tiktok" ? "TikTok" : "Instagram"}
-                      </a>
-                    </div>
+                    <a
+                      href={activePublishedUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block text-xs font-medium text-center text-blue-400 underline truncate hover:text-blue-300"
+                    >
+                      {activePublishedUrl}
+                    </a>
                   </div>
                 ) : activePublishedUrl ? (
-                  <div className="p-4 text-center border rounded-xl border-slate-800 bg-slate-950/50">
-                    <p className="mb-2 text-sm text-slate-400">Format link tidak didukung.</p>
-                    <a 
-                      href={activePublishedUrl} 
-                      target="_blank" 
+                  <div className="p-6 text-center border rounded-2xl border-slate-800 bg-slate-950/50">
+                    <p className="mb-2 text-sm text-slate-400">
+                      Format link tidak didukung untuk pratinjau langsung.
+                    </p>
+                    <a
+                      href={activePublishedUrl}
+                      target="_blank"
                       rel="noreferrer"
                       className="text-xs font-medium text-blue-400 underline hover:text-blue-300"
                     >
-                      Buka tautan eksternal
+                      Buka tautan eksternal &rarr;
                     </a>
                   </div>
                 ) : (
-                  <p className="py-4 text-sm italic text-center text-slate-500">
+                  <p className="py-8 text-sm italic text-center text-slate-500">
                     Belum ada link postingan yang ditambahkan.
                   </p>
                 )}
@@ -489,7 +512,6 @@ export default function ContentDetailPage() {
             </Card>
           )}
 
-          {/* Metrics Panel */}
           {!isEditor && (
             <MetricsPanel
               contentId={content.id}
@@ -500,7 +522,6 @@ export default function ContentDetailPage() {
           )}
         </div>
 
-        {/* ASIDE HANYA MUNCUL JIKA BELUM PUBLISHED */}
         {!isPublished && (
           <aside className="space-y-6">
             <ReviewPanel
