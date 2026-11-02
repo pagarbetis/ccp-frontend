@@ -76,7 +76,7 @@ export default function Checklist({ contentId, items = [], onChange }) {
         <ul className="px-4 overflow-hidden border divide-y shadow-inner divide-slate-800/60 rounded-2xl border-slate-800/80 bg-slate-950/50">
           {items.length === 0 && (
             <li className="py-8 text-sm italic text-center text-slate-500">
-              Belum ada tugas. Contoh: "B-roll direkam", "Thumbnail disetujui".
+              Belum ada tugas.
             </li>
           )}
           {items.map((item) => (

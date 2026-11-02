@@ -1,14 +1,40 @@
-import { Clapperboard, LogOut, Play, Video, Sparkles, Mic, Camera, Layers, Radio, Users, Film, Flame, Menu, X } from "lucide-react";
+import {
+  Clapperboard,
+  LogOut,
+  Play,
+  Video,
+  Sparkles,
+  Mic,
+  Camera,
+  Layers,
+  Radio,
+  Users,
+  Film,
+  Flame,
+  Menu,
+  X,
+} from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const NAV_ITEMS = [
-  { to: "/contents", label: "Konten", icon: Layers, roles: ["creator", "editor", "admin"] },
-  { to: "/channels", label: "Channel", icon: Radio, roles: ["creator", "admin"] },
+  {
+    to: "/contents",
+    label: "Konten",
+    icon: Layers,
+    roles: ["creator", "editor", "admin"],
+  },
+  {
+    to: "/channels",
+    label: "Channel",
+    icon: Radio,
+    roles: ["creator", "admin"],
+  },
   { to: "/users", label: "Pengguna", icon: Users, roles: ["admin"] },
 ];
 
@@ -16,6 +42,7 @@ export default function AppLayout() {
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
@@ -30,13 +57,48 @@ export default function AppLayout() {
 
   const creatorIcons = [
     { Icon: Play, top: "15%", left: "6%", size: 42, delay: 0, duration: 4.5 },
-    { Icon: Video, top: "25%", right: "8%", size: 46, delay: 0.6, duration: 5.5 },
-    { Icon: Sparkles, top: "72%", left: "10%", size: 38, delay: 0.2, duration: 4 },
+    {
+      Icon: Video,
+      top: "25%",
+      right: "8%",
+      size: 46,
+      delay: 0.6,
+      duration: 5.5,
+    },
+    {
+      Icon: Sparkles,
+      top: "72%",
+      left: "10%",
+      size: 38,
+      delay: 0.2,
+      duration: 4,
+    },
     { Icon: Mic, top: "82%", right: "12%", size: 40, delay: 1.2, duration: 5 },
-    { Icon: Camera, top: "10%", right: "28%", size: 36, delay: 1.5, duration: 6.5 },
-    { Icon: Clapperboard, top: "68%", left: "18%", size: 44, delay: 0.8, duration: 5.8 },
+    {
+      Icon: Camera,
+      top: "10%",
+      right: "28%",
+      size: 36,
+      delay: 1.5,
+      duration: 6.5,
+    },
+    {
+      Icon: Clapperboard,
+      top: "68%",
+      left: "18%",
+      size: 44,
+      delay: 0.8,
+      duration: 5.8,
+    },
     { Icon: Film, top: "40%", left: "4%", size: 34, delay: 2, duration: 5.2 },
-    { Icon: Flame, top: "30%", right: "5%", size: 38, delay: 0.4, duration: 4.6 },
+    {
+      Icon: Flame,
+      top: "30%",
+      right: "5%",
+      size: 38,
+      delay: 0.4,
+      duration: 4.6,
+    },
   ];
 
   return (
@@ -65,22 +127,29 @@ export default function AppLayout() {
       <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[160px] pointer-events-none ambient-blob-1" />
       <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[160px] pointer-events-none ambient-blob-2" />
 
-      {creatorIcons.map(({ Icon, top, left, right, size, delay, duration }, index) => (
-        <motion.div
-          key={index}
-          style={{ position: "absolute", top, left, right }}
-          initial={{ y: 0, opacity: 0.2, rotate: 0 }}
-          animate={{
-            y: [-25, 25, -25],
-            rotate: [-10, 10, -10],
-            opacity: [0.2, 0.5, 0.2],
-          }}
-          transition={{ duration, repeat: Infinity, ease: "easeInOut", delay }}
-          className="text-blue-500/30 drop-shadow-[0_0_20px_rgba(59,130,246,0.3)] pointer-events-none hidden lg:block"
-        >
-          <Icon size={size} />
-        </motion.div>
-      ))}
+      {creatorIcons.map(
+        ({ Icon, top, left, right, size, delay, duration }, index) => (
+          <motion.div
+            key={index}
+            style={{ position: "absolute", top, left, right }}
+            initial={{ y: 0, opacity: 0.2, rotate: 0 }}
+            animate={{
+              y: [-25, 25, -25],
+              rotate: [-10, 10, -10],
+              opacity: [0.2, 0.5, 0.2],
+            }}
+            transition={{
+              duration,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay,
+            }}
+            className="text-blue-500/30 drop-shadow-[0_0_20px_rgba(59,130,246,0.3)] pointer-events-none hidden lg:block"
+          >
+            <Icon size={size} />
+          </motion.div>
+        ),
+      )}
 
       {/* Grid Bergerak */}
       <div className="absolute inset-0 pointer-events-none animated-grid" />
@@ -88,7 +157,7 @@ export default function AppLayout() {
       {/* 📱 MOBILE SIDEBAR BACKDROP */}
       <AnimatePresence>
         {mobileMenuOpen && !isDesktop && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -101,29 +170,34 @@ export default function AppLayout() {
       {/* 🗂 SIDEBAR */}
       <motion.aside
         initial={false}
-        animate={{ 
-          x: isDesktop ? 0 : (mobileMenuOpen ? 0 : "-100%") 
+        animate={{
+          x: isDesktop ? 0 : mobileMenuOpen ? 0 : "-100%",
         }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
           "fixed lg:relative inset-y-0 left-0 z-40 w-68 flex flex-col shrink-0 h-full",
           "border-r border-slate-800/40 bg-slate-900/95 lg:bg-slate-900/50 backdrop-blur-2xl",
-          "shadow-[20px_0_50px_rgba(0,0,0,0.6)]"
+          "shadow-[20px_0_50px_rgba(0,0,0,0.6)]",
         )}
       >
         {/* Brand Header */}
         <div className="flex items-center justify-between h-20 px-6 border-b border-slate-800/30 shrink-0">
           <div className="flex items-center gap-3.5">
-            <motion.div 
+            <motion.div
               whileHover={{ rotate: 10, scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/contents")}
               className="flex items-center justify-center w-10 h-10 text-white shadow-lg cursor-pointer bg-gradient-to-tr from-blue-600 to-blue-500 rounded-xl shadow-blue-600/30"
             >
               <Clapperboard className="w-5 h-5" />
             </motion.div>
             <div className="flex flex-col">
-              <span className="text-sm font-bold tracking-tight text-white">Pipeline Konten</span>
-              <span className="text-[10px] text-blue-400/80 font-medium tracking-wider uppercase">Creator Studio</span>
+              <span className="text-sm font-bold tracking-tight text-white">
+                Pipeline Konten
+              </span>
+              <span className="text-[10px] text-blue-400/80 font-medium tracking-wider uppercase">
+                Creator Studio
+              </span>
             </div>
           </div>
           {/* Tombol Close khusus Mobile */}
@@ -156,17 +230,26 @@ export default function AppLayout() {
                       "flex items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 relative overflow-hidden",
                       isActive
                         ? "bg-blue-600/90 text-white shadow-lg shadow-blue-600/25 font-semibold backdrop-blur-md"
-                        : "text-slate-400 hover:bg-slate-800/30 hover:text-slate-200"
+                        : "text-slate-400 hover:bg-slate-800/30 hover:text-slate-200",
                     )}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="activePill"
                         className="absolute inset-0 bg-blue-600 -z-10"
-                        transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 35,
+                        }}
                       />
                     )}
-                    <Icon className={cn("w-4 h-4 transition-colors", isActive ? "text-white" : "text-slate-400")} />
+                    <Icon
+                      className={cn(
+                        "w-4 h-4 transition-colors",
+                        isActive ? "text-white" : "text-slate-400",
+                      )}
+                    />
                     <span>{item.label}</span>
                   </motion.div>
                 )}
@@ -179,8 +262,12 @@ export default function AppLayout() {
         <div className="p-4 space-y-3 border-t border-slate-800/30 shrink-0 bg-slate-950/30 backdrop-blur-md">
           <div className="flex items-center justify-between px-2 py-1">
             <div className="flex flex-col truncate">
-              <span className="text-sm font-medium truncate text-slate-200">{user?.name}</span>
-              <span className="text-[11px] text-blue-400/80 capitalize font-medium">{user?.role}</span>
+              <span className="text-sm font-medium truncate text-slate-200">
+                {user?.name}
+              </span>
+              <span className="text-[11px] text-blue-400/80 capitalize font-medium">
+                {user?.role}
+              </span>
             </div>
           </div>
           <Button
