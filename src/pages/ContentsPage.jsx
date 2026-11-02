@@ -4,7 +4,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import StageBar from "@/components/StageBar";
 import { buttonVariants } from "@/components/ui/button";
-import { NativeSelect as Select } from "@/components/ui/native-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { FORMATS, PLATFORMS, STAGES, labelOf } from "@/lib/constants";
@@ -18,8 +24,8 @@ export default function ContentsPage() {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [channelId, setChannelId] = useState("");
-  const [format, setFormat] = useState("");
+  const [channelId, setChannelId] = useState("all");
+  const [format, setFormat] = useState("all");
   const [stage, setStage] = useState("");
 
   useEffect(() => {
@@ -33,7 +39,7 @@ export default function ContentsPage() {
   useEffect(() => {
     setLoading(true);
     const params = {};
-    if (channelId) {
+    if (channelId && channelId !== "all") {
       params.channel_id = channelId;
     }
 
@@ -46,7 +52,8 @@ export default function ContentsPage() {
 
   const contentsInFormat = useMemo(() => {
     return contents.filter(
-      (content) => !format || content.format_type === format,
+      (content) =>
+        format === "all" || !format || content.format_type === format,
     );
   }, [contents, format]);
 
@@ -61,13 +68,21 @@ export default function ContentsPage() {
     <div className="space-y-6 text-slate-100">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Konten</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Konten
+          </h1>
           <p className="mt-1 text-sm text-slate-400">
             Pipeline dan alur produksi konten dari tahap ide hingga siap tayang.
           </p>
         </div>
         {!isEditor && (
-          <Link to="/contents/new" className={cn(buttonVariants(), "bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/30")}>
+          <Link
+            to="/contents/new"
+            className={cn(
+              buttonVariants(),
+              "bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/30",
+            )}
+          >
             <Plus className="w-4 h-4 mr-1.5" />
             Konten baru
           </Link>
@@ -96,32 +111,51 @@ export default function ContentsPage() {
 
       <div className="flex flex-wrap gap-3 mt-4">
         {!isEditor && (
-          <Select
-            className="w-52 border-slate-700 bg-slate-900 text-slate-100 focus-visible:ring-blue-500"
-            value={channelId}
-            onChange={(e) => setChannelId(e.target.value)}
-            aria-label="Filter channel"
-          >
-            <option value="" className="bg-slate-900 text-slate-400">Semua channel</option>
-            {channels.map((channel) => (
-              <option key={channel.id} value={channel.id} className="bg-slate-900 text-slate-100">
-                {labelOf(PLATFORMS, channel.platform)} {channel.handle_name}
-              </option>
-            ))}
+          <Select value={channelId} onValueChange={setChannelId}>
+            <SelectTrigger className="w-52 border-slate-700 bg-slate-900 text-slate-100 focus:ring-blue-500">
+              <SelectValue placeholder="Semua channel" />
+            </SelectTrigger>
+            <SelectContent className="border-slate-800 bg-slate-900 text-slate-100">
+              <SelectItem
+                value="all"
+                className="focus:bg-slate-800 focus:text-slate-100"
+              >
+                Semua channel
+              </SelectItem>
+              {channels.map((channel) => (
+                <SelectItem
+                  key={channel.id}
+                  value={String(channel.id)}
+                  className="focus:bg-slate-800 focus:text-slate-100"
+                >
+                  {labelOf(PLATFORMS, channel.platform)} {channel.handle_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         )}
-        <Select
-          className="w-48 border-slate-700 bg-slate-900 text-slate-100 focus-visible:ring-blue-500"
-          value={format}
-          onChange={(e) => setFormat(e.target.value)}
-          aria-label="Filter format"
-        >
-          <option value="" className="bg-slate-900 text-slate-400">Semua format</option>
-          {FORMATS.map((item) => (
-            <option key={item.value} value={item.value} className="bg-slate-900 text-slate-100">
-              {item.label}
-            </option>
-          ))}
+
+        <Select value={format} onValueChange={setFormat}>
+          <SelectTrigger className="w-48 border-slate-700 bg-slate-900 text-slate-100 focus:ring-blue-500">
+            <SelectValue placeholder="Semua format" />
+          </SelectTrigger>
+          <SelectContent className="border-slate-800 bg-slate-900 text-slate-100">
+            <SelectItem
+              value="all"
+              className="focus:bg-slate-800 focus:text-slate-100"
+            >
+              Semua format
+            </SelectItem>
+            {FORMATS.map((item) => (
+              <SelectItem
+                key={item.value}
+                value={item.value}
+                className="focus:bg-slate-800 focus:text-slate-100"
+              >
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
 
@@ -156,25 +190,23 @@ export default function ContentsPage() {
   );
 }
 
-function StageTab({
-  label,
-  count,
-  active,
-  onClick,
-  color = "#3b82f6",
-}) {
+function StageTab({ label, count, active, onClick, color = "#3b82f6" }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
         "-mb-px whitespace-nowrap border-b-[3px] px-4 py-2.5 text-sm transition-colors hover:text-white hover:bg-slate-900/50",
-        active ? "font-semibold text-white" : "border-transparent text-slate-400",
+        active
+          ? "font-semibold text-white"
+          : "border-transparent text-slate-400",
       )}
       style={active ? { borderBottomColor: color } : undefined}
     >
       {label}{" "}
-      <span className="ml-1 px-1.5 py-0.5 text-xs rounded bg-slate-800 text-slate-300 tabular-nums">{count}</span>
+      <span className="ml-1 px-1.5 py-0.5 text-xs rounded bg-slate-800 text-slate-300 tabular-nums">
+        {count}
+      </span>
     </button>
   );
 }
@@ -186,23 +218,34 @@ function ContentRow({ content }) {
     content.scheduled_date < todayString() &&
     content.status !== "published";
 
-  // Ambil nama pemilik channel jika ada di relasi data backend
-  const channelOwner = content.channel?.user_name || content.channel?.user?.name || content.channel?.ownerName;
+  const channelOwner =
+    content.channel?.user_name ||
+    content.channel?.user?.name ||
+    content.channel?.ownerName;
   const hasTitle = content.title && content.title.trim() !== "";
 
   return (
-    <tr 
+    <tr
       onClick={() => navigate(`/contents/${content.id}`)}
       className="transition-colors cursor-pointer hover:bg-slate-800/40"
     >
       <td className="px-4 py-3.5">
-        <div className={cn("font-medium transition-colors", hasTitle ? "text-slate-100 hover:text-blue-400" : "text-slate-500 italic")}>
+        <div
+          className={cn(
+            "font-medium transition-colors",
+            hasTitle
+              ? "text-slate-100 hover:text-blue-400"
+              : "text-slate-500 italic",
+          )}
+        >
           {hasTitle ? content.title : "Tanpa judul"}
         </div>
         <div className="text-xs text-slate-400 mt-0.5">
           {labelOf(PLATFORMS, content.channel?.platform)}{" "}
           {content.channel?.handle_name || content.channel?.handleName}
-          {channelOwner && <span className="text-slate-500"> - {channelOwner}</span>}
+          {channelOwner && (
+            <span className="text-slate-500"> ({channelOwner})</span>
+          )}
         </div>
         {content.editor_name && (
           <div className="text-xs text-blue-400/80 mt-0.5">
@@ -210,13 +253,24 @@ function ContentRow({ content }) {
           </div>
         )}
       </td>
-      <td className="px-4 py-3.5 text-slate-300">{labelOf(FORMATS, content.format_type)}</td>
+      <td className="px-4 py-3.5 text-slate-300">
+        {labelOf(FORMATS, content.format_type)}
+      </td>
       <td className="px-4 py-3.5">
         <StageBar status={content.status} />
       </td>
-      <td className={cn("px-4 py-3.5 text-slate-300", isLate && "font-medium text-red-400")}>
+      <td
+        className={cn(
+          "px-4 py-3.5 text-slate-300",
+          isLate && "font-medium text-red-400",
+        )}
+      >
         {formatDate(content.scheduled_date)}
-        {isLate && <span className="block text-xs text-red-400 mt-0.5">Lewat jadwal</span>}
+        {isLate && (
+          <span className="block text-xs text-red-400 mt-0.5">
+            Lewat jadwal
+          </span>
+        )}
       </td>
     </tr>
   );

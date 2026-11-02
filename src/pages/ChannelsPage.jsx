@@ -11,12 +11,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { NativeSelect as Select } from "@/components/ui/native-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { PLATFORMS, labelOf } from "@/lib/constants";
 import React from "react";
 
-// Gunakan handle_name di state agar sesuai dengan ekspektasi backend
 const EMPTY_FORM = { platform: "", handle_name: "" };
 
 export default function ChannelsPage() {
@@ -44,7 +49,6 @@ export default function ChannelsPage() {
     try {
       const currentUser = JSON.parse(localStorage.getItem("ccp_user") || "{}");
 
-      // Kirim payload dengan key handle_name dan platform
       const payload = {
         platform: form.platform,
         handle_name: form.handle_name,
@@ -131,21 +135,22 @@ export default function ChannelsPage() {
             >
               <Select
                 value={form.platform}
-                onChange={(e) => setForm({ ...form, platform: e.target.value })}
-                className="border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500 h-11"
+                onValueChange={(value) => setForm({ ...form, platform: value })}
               >
-                <option value="" className="bg-slate-900 text-slate-400">
-                  Pilih platform
-                </option>
-                {PLATFORMS.map((p) => (
-                  <option
-                    key={p.value}
-                    value={p.value}
-                    className="bg-slate-900 text-slate-100"
-                  >
-                    {p.label}
-                  </option>
-                ))}
+                <SelectTrigger className="border-slate-700 bg-slate-950 text-slate-100 focus:ring-blue-500 h-11">
+                  <SelectValue placeholder="Pilih platform" />
+                </SelectTrigger>
+                <SelectContent className="border-slate-800 bg-slate-900 text-slate-100">
+                  {PLATFORMS.map((p) => (
+                    <SelectItem
+                      key={p.value}
+                      value={p.value}
+                      className="focus:bg-slate-800 focus:text-slate-100"
+                    >
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </Field>
             <Field
