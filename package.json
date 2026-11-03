@@ -27,6 +27,8 @@
     "react-router-dom": "^6.26.0",
     "react-social-media-embed": "^2.5.18",
     "sonner": "^1.5.0",
+    "sweetalert2": "^11.26.25",
+    "sweetalert2-react-content": "^5.1.2",
     "tailwind-merge": "^2.5.2"
   },
   "devDependencies": {
