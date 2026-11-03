@@ -10,8 +10,16 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { ROLES } from "@/lib/constants";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
@@ -26,13 +34,19 @@ export function RegisterForm({ className, ...props }) {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "creator",
   });
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.id]: e.target.value });
+  };
+
+  const handleRoleChange = (value) => {
+    setForm({ ...form, role: value });
   };
 
   const handleSubmit = async (e) => {
@@ -44,15 +58,16 @@ export function RegisterForm({ className, ...props }) {
     }
 
     setLoading(true);
+    setErrors({});
 
     try {
       await register(form);
-      toast.success("Registrasi berhasil!");
-      navigate("/contents");
+      toast.success("Akun berhasil dibuat!");
+      navigate(form.role === "editor" ? "/contents" : "/channels");
     } catch (error) {
-      console.error("Register error:", error);
+      setErrors(error.errors || {});
       toast.error(
-        error.response?.data?.message || error.message || "Registrasi gagal!",
+        error.response?.data?.message || error.message || "Gagal membuat akun",
       );
     } finally {
       setLoading(false);
@@ -75,13 +90,14 @@ export function RegisterForm({ className, ...props }) {
             Buat Akun Baru
           </CardTitle>
           <CardDescription className="text-slate-400">
-            Daftarkan akun baru untuk mulai mengelola konten
+            Masukkan data diri untuk mendaftar
           </CardDescription>
         </CardHeader>
         <CardContent className="pb-6">
           <form onSubmit={handleSubmit}>
             <div className="grid gap-5">
               <div className="grid gap-4">
+                {/* Nama Lengkap */}
                 <div className="grid gap-2 text-left">
                   <Label
                     htmlFor="name"
@@ -97,9 +113,14 @@ export function RegisterForm({ className, ...props }) {
                     onChange={handleChange}
                     className="border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500 h-11 rounded-xl"
                     required
+                    autoFocus
                   />
+                  {errors.name && (
+                    <p className="text-sm text-red-400">{errors.name}</p>
+                  )}
                 </div>
 
+                {/* Email */}
                 <div className="grid gap-2 text-left">
                   <Label
                     htmlFor="email"
@@ -116,8 +137,43 @@ export function RegisterForm({ className, ...props }) {
                     className="border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500 h-11 rounded-xl"
                     required
                   />
+                  {errors.email && (
+                    <p className="text-sm text-red-400">{errors.email}</p>
+                  )}
                 </div>
 
+                {/* Role (Shadcn Select) */}
+                <div className="grid gap-2 text-left">
+                  <Label
+                    htmlFor="role"
+                    className="text-xs font-semibold tracking-wider uppercase text-slate-300"
+                  >
+                    Daftar Sebagai
+                  </Label>
+                  <Select value={form.role} onValueChange={handleRoleChange}>
+                    <SelectTrigger className="border-slate-700 bg-slate-950 text-slate-100 focus:ring-blue-500 h-11 rounded-xl">
+                      <SelectValue placeholder="Pilih role" />
+                    </SelectTrigger>
+                    <SelectContent className="border-slate-800 bg-slate-900 text-slate-100">
+                      {ROLES.filter((role) => role.value !== "admin").map(
+                        (role) => (
+                          <SelectItem
+                            key={role.value}
+                            value={role.value}
+                            className="focus:bg-slate-800 focus:text-white"
+                          >
+                            {role.label}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {errors.role && (
+                    <p className="text-sm text-red-400">{errors.role}</p>
+                  )}
+                </div>
+
+                {/* Password */}
                 <div className="grid gap-2 text-left">
                   <Label
                     htmlFor="password"
@@ -129,7 +185,7 @@ export function RegisterForm({ className, ...props }) {
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
+                      placeholder="Minimal 8 karakter"
                       value={form.password}
                       onChange={handleChange}
                       className="pr-10 border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500 h-11 rounded-xl"
@@ -147,8 +203,12 @@ export function RegisterForm({ className, ...props }) {
                       )}
                     </button>
                   </div>
+                  {errors.password && (
+                    <p className="text-sm text-red-400">{errors.password}</p>
+                  )}
                 </div>
 
+                {/* Konfirmasi Password */}
                 <div className="grid gap-2 text-left">
                   <Label
                     htmlFor="confirmPassword"
@@ -182,17 +242,19 @@ export function RegisterForm({ className, ...props }) {
                   </div>
                 </div>
 
+                {/* Tombol Submit */}
                 <div className="pt-2">
                   <Button
                     type="submit"
                     className="w-full font-medium text-white transition-all bg-blue-600 shadow-xl hover:bg-blue-500 shadow-blue-600/30 h-11 rounded-xl hover:scale-[1.02]"
                     disabled={loading}
                   >
-                    {loading ? "Memproses..." : "Daftar"}
+                    {loading ? "Membuat akun..." : "Daftar"}
                   </Button>
                 </div>
               </div>
 
+              {/* Link ke Login */}
               <div className="pt-2 text-sm text-center border-t text-slate-400 border-slate-800/60">
                 Sudah punya akun?{" "}
                 <Link

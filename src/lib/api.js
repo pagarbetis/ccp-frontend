@@ -40,14 +40,23 @@ async function request(method, path, body) {
     return data;
   }
 
-  // UNTUK ENDPOINT LAIN (Contents, Channels, Users, dll):
-  // Jika backend membungkus di dalam .data, otomatis ambil .data-nya.
-  // Jika tidak, kembalikan data utuh.
   return data.data !== undefined ? data.data : data;
 }
 
 export const api = {
-  register: (body) => request("POST", "/auth/register", body),
+  // Trik: Begitu register sukses, otomatis tembak login di baliknya biar dapet token
+  register: async (body) => {
+    await request("POST", "/auth/register", body);
+    
+    // Auto login buat narik token karena backend register gak nyediain token
+    const loginResponse = await request("POST", "/auth/login", {
+      email: body.email,
+      password: body.password,
+    });
+    
+    return loginResponse;
+  },
+
   login: (body) => request("POST", "/auth/login", body),
 
   getChannels: () => request("GET", "/channels"),
