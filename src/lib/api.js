@@ -35,7 +35,6 @@ async function request(method, path, body) {
     );
   }
 
-  // KHUSUS LOGIN & REGISTER: Kembalikan data utuh karena butuh token di luar .data
   if (path.includes("/auth/login") || path.includes("/auth/register")) {
     return data;
   }
@@ -44,11 +43,9 @@ async function request(method, path, body) {
 }
 
 export const api = {
-  // Trik: Begitu register sukses, otomatis tembak login di baliknya biar dapet token
   register: async (body) => {
     await request("POST", "/auth/register", body);
     
-    // Auto login buat narik token karena backend register gak nyediain token
     const loginResponse = await request("POST", "/auth/login", {
       email: body.email,
       password: body.password,

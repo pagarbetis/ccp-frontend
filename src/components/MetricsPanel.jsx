@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Field from "@/components/Field";
 import { Button } from "@/components/ui/button";
@@ -55,22 +55,57 @@ export default function MetricsPanel({
   const [form, setForm] = useState(emptyForm());
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    return saved ? saved === "dark" : true;
+  });
+
+  useEffect(() => {
+    const handleThemeChange = () => {
+      const saved = localStorage.getItem("theme");
+      if (saved) {
+        setIsDarkMode(saved === "dark");
+      }
+    };
+
+    window.addEventListener("storage", handleThemeChange);
+    window.addEventListener("themeChange", handleThemeChange);
+
+    return () => {
+      window.removeEventListener("storage", handleThemeChange);
+      window.removeEventListener("themeChange", handleThemeChange);
+    };
+  }, []);
 
   if (!isPublished) {
     return (
-      <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+      <Card
+        className={`relative overflow-hidden shadow-xl backdrop-blur-2xl rounded-3xl transition-colors duration-300 ${
+          isDarkMode
+            ? "border-slate-800/80 bg-slate-900/70 text-slate-100 shadow-blue-950/25"
+            : "border-slate-200/80 bg-white/90 text-slate-900 shadow-slate-200/60"
+        }`}
+      >
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base font-semibold text-white">
-            <BarChart3 className="w-5 h-5 text-blue-400" />
+          <CardTitle
+            className={`flex items-center gap-2 text-base font-semibold ${
+              isDarkMode ? "text-white" : "text-slate-900"
+            }`}
+          >
+            <BarChart3 className="w-5 h-5 text-blue-500" />
             Metrik Performa
           </CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardDescription
+            className={isDarkMode ? "text-slate-400" : "text-slate-600"}
+          >
             Riwayat performa konten
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="py-2 text-sm text-slate-500">
+          <p
+            className={`py-2 text-sm ${isDarkMode ? "text-slate-500" : "text-slate-500"}`}
+          >
             Metrik bisa dicatat setelah konten ditandai Tayang.
           </p>
         </CardContent>
@@ -114,17 +149,35 @@ export default function MetricsPanel({
   }
 
   return (
-    <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+    <Card
+      className={`relative overflow-hidden shadow-xl backdrop-blur-2xl rounded-3xl transition-colors duration-300 ${
+        isDarkMode
+          ? "border-slate-800/80 bg-slate-900/70 text-slate-100 shadow-blue-950/25"
+          : "border-slate-200/80 bg-white/90 text-slate-900 shadow-slate-200/60"
+      }`}
+    >
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
-      <CardHeader className="pb-4 mb-4 border-b border-slate-800/60">
-        <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
-          <BarChart3 className="w-5 h-5 text-blue-400" />
+
+      <CardHeader
+        className={`pb-4 mb-4 border-b ${
+          isDarkMode ? "border-slate-800/60" : "border-slate-200"
+        }`}
+      >
+        <CardTitle
+          className={`flex items-center gap-2 text-lg font-semibold ${
+            isDarkMode ? "text-white" : "text-slate-900"
+          }`}
+        >
+          <BarChart3 className="w-5 h-5 text-blue-500" />
           Metrik Performa
         </CardTitle>
-        <CardDescription className="text-slate-400">
+        <CardDescription
+          className={isDarkMode ? "text-slate-400" : "text-slate-600"}
+        >
           Catat dan pantau perkembangan metrik konten secara berkala
         </CardDescription>
       </CardHeader>
+
       <CardContent className="space-y-6">
         <form
           onSubmit={handleSubmit}
@@ -133,13 +186,17 @@ export default function MetricsPanel({
           <Field
             label="Tanggal"
             error={errors.recordedAt || errors.recorded_at}
-            className="text-slate-300"
+            className={isDarkMode ? "text-slate-300" : "text-slate-700"}
           >
             <Input
               type="date"
               value={form.recordedAt}
               onChange={(e) => setForm({ ...form, recordedAt: e.target.value })}
-              className="h-10 border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500 rounded-xl"
+              className={`h-10 rounded-xl transition-colors ${
+                isDarkMode
+                  ? "border-slate-700 bg-slate-950 text-slate-100 focus-visible:ring-blue-500"
+                  : "border-slate-300 bg-slate-50 text-slate-900 focus-visible:ring-blue-500"
+              }`}
             />
           </Field>
           {COUNT_FIELDS.map((field) => (
@@ -147,7 +204,7 @@ export default function MetricsPanel({
               key={field.name}
               label={field.label}
               error={errors[field.name]}
-              className="text-slate-300"
+              className={isDarkMode ? "text-slate-300" : "text-slate-700"}
             >
               <Input
                 type="number"
@@ -157,7 +214,11 @@ export default function MetricsPanel({
                 onChange={(e) =>
                   setForm({ ...form, [field.name]: e.target.value })
                 }
-                className="h-10 border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500 rounded-xl"
+                className={`h-10 rounded-xl transition-colors ${
+                  isDarkMode
+                    ? "border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:ring-blue-500"
+                    : "border-slate-300 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus-visible:ring-blue-500"
+                }`}
               />
             </Field>
           ))}
@@ -165,16 +226,28 @@ export default function MetricsPanel({
             <Button
               type="submit"
               disabled={saving}
-              className="px-6 font-medium text-white bg-blue-600 shadow-xl hover:bg-blue-500 shadow-blue-600/30 h-11 rounded-xl transition-all hover:scale-[1.02]"
+              className="px-6 font-medium text-white bg-blue-600 shadow-xl hover:bg-blue-500 shadow-blue-600/30 h-11 rounded-xl transition-all hover:scale-[1.02] cursor-pointer"
             >
               {saving ? "Menyimpan..." : "Catat metrik"}
             </Button>
           </div>
         </form>
 
-        <div className="overflow-x-auto border shadow-inner rounded-2xl border-slate-800/80 bg-slate-950/50">
+        <div
+          className={`overflow-x-auto border shadow-inner rounded-2xl ${
+            isDarkMode
+              ? "border-slate-800/80 bg-slate-950/50"
+              : "border-slate-200 bg-slate-50/50"
+          }`}
+        >
           <table className="w-full text-sm">
-            <thead className="text-left border-b border-slate-800/80 bg-slate-900/90 text-slate-400">
+            <thead
+              className={`text-left border-b ${
+                isDarkMode
+                  ? "border-slate-800/80 bg-slate-900/90 text-slate-400"
+                  : "border-slate-200 bg-slate-100 text-slate-600"
+              }`}
+            >
               <tr>
                 <th className="px-4 py-3 font-semibold">Tanggal</th>
                 {COUNT_FIELDS.map((field) => (
@@ -187,15 +260,19 @@ export default function MetricsPanel({
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody
+              className={`divide-y ${isDarkMode ? "divide-slate-800/60" : "divide-slate-200"}`}
+            >
               {metrics.map((metric) => {
                 const recDate = metric.recordedAt || metric.recorded_at;
                 return (
                   <tr
                     key={metric.id}
-                    className="transition-colors hover:bg-slate-800/30"
+                    className={`transition-colors ${isDarkMode ? "hover:bg-slate-800/30" : "hover:bg-slate-100/50"}`}
                   >
-                    <td className="px-4 py-3 text-slate-300">
+                    <td
+                      className={`px-4 py-3 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}
+                    >
                       {safeFormatDate(recDate)}
                     </td>
                     {COUNT_FIELDS.map((field) => {
@@ -206,7 +283,7 @@ export default function MetricsPanel({
                       return (
                         <td
                           key={field.name}
-                          className="px-4 py-3 text-right tabular-nums text-slate-200"
+                          className={`px-4 py-3 text-right tabular-nums ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}
                         >
                           {formatNumber(val)}
                         </td>
@@ -218,7 +295,9 @@ export default function MetricsPanel({
             </tbody>
           </table>
           {metrics.length === 0 && (
-            <p className="px-4 py-8 text-sm italic text-center text-slate-500">
+            <p
+              className={`px-4 py-8 text-sm italic text-center ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}
+            >
               Belum ada catatan. Isi angka dari dashboard platform secara
               berkala.
             </p>

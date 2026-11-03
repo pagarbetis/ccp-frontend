@@ -2,8 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Play, Video, Sparkles, Mic, Camera, Clapperboard, Film } from "lucide-react";
 
-export default function AuthShell({ children, footer }) {
-  // Ukuran & opacity ikon diperbesar/diterangin biar makin keliatan
+export default function AuthShell({ children, footer, isDarkMode = false }) {
   const creatorIcons = [
     { Icon: Play, top: "15%", left: "10%", size: 42, delay: 0, duration: 5 },
     { Icon: Video, top: "22%", right: "12%", size: 46, delay: 0.8, duration: 6 },
@@ -15,8 +14,10 @@ export default function AuthShell({ children, footer }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center w-full min-h-screen px-4 py-8 overflow-hidden bg-slate-950 text-slate-100">
-      {/* 🌊 1. Blob Cahaya Lebih Terang & Luas */}
+    <div className={`fixed inset-0 z-50 flex items-center justify-center w-full min-h-screen px-4 py-8 overflow-hidden transition-colors duration-300 ${
+      isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
+    }`}>
+      {/* 🌊 1. Blob Cahaya (Menyesuaikan Mode Terang / Gelap) */}
       <motion.div
         animate={{
           scale: [1, 1.35, 1],
@@ -29,7 +30,9 @@ export default function AuthShell({ children, footer }) {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-blue-600/40 rounded-full blur-[120px] pointer-events-none"
+        className={`absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none ${
+          isDarkMode ? 'bg-blue-600/40' : 'bg-slate-300/60'
+        }`}
       />
       <motion.div
         animate={{
@@ -43,10 +46,12 @@ export default function AuthShell({ children, footer }) {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute -bottom-32 -right-32 w-[600px] h-[600px] bg-indigo-600/40 rounded-full blur-[120px] pointer-events-none"
+        className={`absolute -bottom-32 -right-32 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none ${
+          isDarkMode ? 'bg-indigo-600/40' : 'bg-gray-300/60'
+        }`}
       />
 
-      {/* 🎬 2. Ikon Konten Kreator (Opacity & Ukuran Lebih Jelas) */}
+      {/* 🎬 2. Ikon Konten Kreator */}
       {creatorIcons.map(({ Icon, top, left, right, size, delay, duration }, index) => (
         <motion.div
           key={index}
@@ -63,14 +68,24 @@ export default function AuthShell({ children, footer }) {
             ease: "easeInOut",
             delay: delay,
           }}
-          className="text-blue-400/60 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] pointer-events-none hidden md:block"
+          className={`hidden md:block pointer-events-none ${
+            isDarkMode 
+              ? 'text-blue-400/60 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]' 
+              : 'text-slate-400/70 drop-shadow-[0_0_10px_rgba(148,163,184,0.3)]'
+          }`}
         >
           <Icon size={size} />
         </motion.div>
       ))}
 
       {/* Grid Pattern Studio */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#3b82f615_1px,transparent_1px),linear-gradient(to_bottom,#3b82f615_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] pointer-events-none" />
+      <div 
+        className={`absolute inset-0 pointer-events-none ${
+          isDarkMode 
+            ? 'bg-[linear-gradient(to_right,#3b82f615_1px,transparent_1px),linear-gradient(to_bottom,#3b82f615_1px,transparent_1px)] bg-[size:3.5rem_3.5rem]' 
+            : 'bg-[linear-gradient(to_right,#94a3b815_1px,transparent_1px),linear-gradient(to_bottom,#94a3b815_1px,transparent_1px)] bg-[size:3.5rem_3.5rem]'
+        }`} 
+      />
 
       {/* 📦 3. Container Form */}
       <div className="relative z-10 w-full max-w-md">

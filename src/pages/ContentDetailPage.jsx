@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, PlaySquare, FileText, ExternalLink, Link2 } from "lucide-react";
+import {
+  ArrowLeft,
+  PlaySquare,
+  FileText,
+  ExternalLink,
+  Link2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { InstagramEmbed } from "react-social-media-embed";
 
@@ -33,8 +39,16 @@ function toFormValues(content) {
   const pubUrl = content.published_url ?? content.publishedUrl ?? "";
   return {
     title: content.title || "",
-    channel_id: content.channel_id ? String(content.channel_id) : (content.channelId ? String(content.channelId) : ""),
-    editor_id: content.editor_id ? String(content.editor_id) : (content.editorId ? String(content.editorId) : ""),
+    channel_id: content.channel_id
+      ? String(content.channel_id)
+      : content.channelId
+        ? String(content.channelId)
+        : "",
+    editor_id: content.editor_id
+      ? String(content.editor_id)
+      : content.editorId
+        ? String(content.editorId)
+        : "",
     format_type: content.format_type || content.formatType || "",
     priority: content.priority || "sedang",
     scheduled_date: content.scheduled_date ?? content.scheduledDate ?? "",
@@ -75,7 +89,7 @@ function getEmbedDetails(url) {
   return { type: null, embedUrl: null };
 }
 
-function TikTokPlayer({ url, title }) {
+function TikTokPlayer({ url, title, isDarkMode }) {
   const [embedHtml, setEmbedHtml] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -119,9 +133,17 @@ function TikTokPlayer({ url, title }) {
   }, [embedHtml]);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full overflow-y-auto border rounded-2xl bg-slate-950 border-slate-800/80 p-4 min-h-[580px] shadow-inner">
+    <div
+      className={`flex flex-col items-center justify-center w-full overflow-y-auto border rounded-2xl p-4 min-h-[580px] shadow-inner transition-colors ${
+        isDarkMode
+          ? "bg-slate-950 border-slate-800/80"
+          : "bg-slate-50 border-slate-200"
+      }`}
+    >
       {loading ? (
-        <p className="text-sm text-slate-400 animate-pulse">
+        <p
+          className={`text-sm animate-pulse ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
+        >
           Memuat pemutar TikTok...
         </p>
       ) : embedHtml ? (
@@ -131,14 +153,26 @@ function TikTokPlayer({ url, title }) {
         />
       ) : (
         <div className="flex flex-col items-center justify-center p-6 space-y-4 text-center">
-          <div className="flex items-center justify-center w-12 h-12 text-blue-400 border rounded-2xl bg-blue-500/10 border-blue-500/20">
+          <div
+            className={`flex items-center justify-center w-12 h-12 text-blue-500 border rounded-2xl ${
+              isDarkMode
+                ? "bg-blue-500/10 border-blue-500/20"
+                : "bg-blue-50 border-blue-200"
+            }`}
+          >
             <PlaySquare className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-white">
+            <p
+              className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}
+            >
               {title || "Video TikTok"}
             </p>
-            <p className="max-w-xs text-xs truncate text-slate-400">{url}</p>
+            <p
+              className={`max-w-xs text-xs truncate ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
+            >
+              {url}
+            </p>
           </div>
           <a
             href={url}
@@ -167,6 +201,27 @@ export default function ContentDetailPage() {
   const [editors, setEditors] = useState([]);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    return saved ? saved === "dark" : true;
+  });
+
+  useEffect(() => {
+    const handleThemeChange = () => {
+      const saved = localStorage.getItem("theme");
+      if (saved) {
+        setIsDarkMode(saved === "dark");
+      }
+    };
+
+    window.addEventListener("storage", handleThemeChange);
+    window.addEventListener("themeChange", handleThemeChange);
+
+    return () => {
+      window.removeEventListener("storage", handleThemeChange);
+      window.removeEventListener("themeChange", handleThemeChange);
+    };
+  }, []);
 
   const loadData = useCallback(() => {
     Promise.all([
@@ -192,7 +247,9 @@ export default function ContentDetailPage() {
 
   if (!content || !values)
     return (
-      <p className="px-4 py-12 text-center text-slate-400">
+      <p
+        className={`px-4 py-12 text-center ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}
+      >
         Memuat detail konten...
       </p>
     );
@@ -255,12 +312,18 @@ export default function ContentDetailPage() {
     content.channel;
 
   return (
-    <div className="pb-12 mx-auto space-y-6 text-slate-100 max-w-7xl">
+    <div
+      className={`pb-12 mx-auto space-y-6 transition-colors duration-300 max-w-7xl ${isDarkMode ? "text-slate-100" : "text-slate-900"}`}
+    >
       {/* Top Nav & Action Header */}
       <div className="flex flex-col gap-2">
         <Link
           to="/contents"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-white transition-colors w-fit"
+          className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors w-fit ${
+            isDarkMode
+              ? "text-slate-400 hover:text-white"
+              : "text-slate-600 hover:text-slate-950"
+          }`}
         >
           <ArrowLeft className="w-4 h-4" />
           Kembali ke daftar konten
@@ -268,10 +331,12 @@ export default function ContentDetailPage() {
 
         <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
           <div className="space-y-1">
-            <span className="text-xs font-semibold tracking-wider text-blue-400 uppercase">
+            <span className="text-xs font-semibold tracking-wider text-blue-500 uppercase">
               Detail Produksi
             </span>
-            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl line-clamp-1">
+            <h1
+              className={`text-2xl font-bold tracking-tight sm:text-3xl line-clamp-1 ${isDarkMode ? "text-white" : "text-slate-900"}`}
+            >
               {content.title}
             </h1>
           </div>
@@ -281,15 +346,24 @@ export default function ContentDetailPage() {
         </div>
       </div>
 
-      {/* Stage Progress Card with Glow Accent */}
-      <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 shadow-blue-950/20 rounded-3xl">
+      <Card
+        className={`relative overflow-hidden shadow-xl backdrop-blur-2xl rounded-3xl transition-colors duration-300 ${
+          isDarkMode
+            ? "border-slate-800/80 bg-slate-900/70 text-slate-100 shadow-blue-950/25"
+            : "border-slate-200/80 bg-white/90 text-slate-900 shadow-slate-200/60"
+        }`}
+      >
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent" />
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base font-semibold text-white">
+          <CardTitle
+            className={`flex items-center gap-2 text-base font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}
+          >
             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
             Status Alur Kerja
           </CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardDescription
+            className={isDarkMode ? "text-slate-400" : "text-slate-600"}
+          >
             Pantau dan teruskan tahapan produksi konten ke level berikutnya
           </CardDescription>
         </CardHeader>
@@ -299,7 +373,7 @@ export default function ContentDetailPage() {
             <Button
               size="sm"
               disabled={saving}
-              className="font-medium text-white bg-blue-600 shadow-lg hover:bg-blue-500 shadow-blue-600/30 rounded-xl px-5 h-10 transition-all hover:scale-[1.02]"
+              className="font-medium text-white bg-blue-600 shadow-lg hover:bg-blue-500 shadow-blue-600/30 rounded-xl px-5 h-10 transition-all hover:scale-[1.02] cursor-pointer"
               onClick={() =>
                 save(
                   { status: nextStage },
@@ -318,16 +392,27 @@ export default function ContentDetailPage() {
         className={`grid gap-6 ${isPublished ? "lg:grid-cols-1" : "lg:grid-cols-[1fr_24rem]"}`}
       >
         <div className="space-y-6">
-          {/* LINK POSTINGAN / RINGKASAN PUBLIKASI DIPINDAH KE ATAS */}
           {isReadyOrPublished && (
-            <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+            <Card
+              className={`relative overflow-hidden shadow-xl backdrop-blur-2xl rounded-3xl transition-colors duration-300 ${
+                isDarkMode
+                  ? "border-slate-800/80 bg-slate-900/70 text-slate-100 shadow-blue-950/25"
+                  : "border-slate-200/80 bg-white/90 text-slate-900 shadow-slate-200/60"
+              }`}
+            >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
-              <CardHeader className="pb-4 mb-4 border-b border-slate-800/60">
-                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
-                  <Link2 className="w-5 h-5 text-blue-400" />
+              <CardHeader
+                className={`pb-4 mb-4 border-b ${isDarkMode ? "border-slate-800/60" : "border-slate-200"}`}
+              >
+                <CardTitle
+                  className={`flex items-center gap-2 text-lg font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                >
+                  <Link2 className="w-5 h-5 text-blue-500" />
                   {isPublished ? "Ringkasan Publikasi" : "Tautan Postingan"}
                 </CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardDescription
+                  className={isDarkMode ? "text-slate-400" : "text-slate-600"}
+                >
                   {isPublished
                     ? "Informasi utama konten yang telah tayang"
                     : "Wajib diisi sebelum konten ditandai Tayang"}
@@ -336,19 +421,31 @@ export default function ContentDetailPage() {
               <CardContent className="space-y-4">
                 {isPublished ? (
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="p-4 border rounded-2xl bg-slate-950/50 border-slate-800/60">
-                      <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+                    <div
+                      className={`p-4 border rounded-2xl ${isDarkMode ? "bg-slate-950/50 border-slate-800/60" : "bg-slate-50 border-slate-200"}`}
+                    >
+                      <span
+                        className={`text-[11px] font-semibold tracking-wider uppercase ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
+                      >
                         Judul
                       </span>
-                      <p className="mt-1 text-sm font-semibold text-white">
+                      <p
+                        className={`mt-1 text-sm font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                      >
                         {content.title}
                       </p>
                     </div>
-                    <div className="p-4 border rounded-2xl bg-slate-950/50 border-slate-800/60">
-                      <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+                    <div
+                      className={`p-4 border rounded-2xl ${isDarkMode ? "bg-slate-950/50 border-slate-800/60" : "bg-slate-50 border-slate-200"}`}
+                    >
+                      <span
+                        className={`text-[11px] font-semibold tracking-wider uppercase ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}
+                      >
                         Channel Tujuan
                       </span>
-                      <p className="mt-1 text-sm font-semibold text-white">
+                      <p
+                        className={`mt-1 text-sm font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                      >
                         {currentChannel
                           ? `${labelOf(PLATFORMS, currentChannel.platform)} ${currentChannel.handle_name || currentChannel.handleName || ""}`
                           : "-"}
@@ -358,23 +455,31 @@ export default function ContentDetailPage() {
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-200">
+                      <label
+                        className={`text-sm font-semibold ${isDarkMode ? "text-slate-200" : "text-slate-900"}`}
+                      >
                         Link postingan platform
                       </label>
                       <div className="flex gap-3">
                         <input
                           type="url"
                           value={values.published_url || ""}
-                          onChange={(e) => changeValue("published_url", e.target.value)}
+                          onChange={(e) =>
+                            changeValue("published_url", e.target.value)
+                          }
                           placeholder="https://"
                           disabled={isEditor}
-                          className="flex w-full px-3 py-2 text-sm border h-11 rounded-xl border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                          className={`flex w-full px-3 py-2 text-sm border h-11 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                            isDarkMode
+                              ? "border-slate-700 bg-slate-950 text-slate-100 placeholder:text-slate-600"
+                              : "border-slate-300 bg-slate-50 text-slate-900 placeholder:text-slate-400 shadow-sm"
+                          }`}
                         />
                         {!isEditor && (
                           <Button
                             type="submit"
                             disabled={saving}
-                            className="px-6 font-medium text-white bg-blue-600 shadow-xl hover:bg-blue-500 shadow-blue-600/30 h-11 rounded-xl transition-all hover:scale-[1.02]"
+                            className="px-6 font-medium text-white bg-blue-600 shadow-xl hover:bg-blue-500 shadow-blue-600/30 h-11 rounded-xl transition-all hover:scale-[1.02] cursor-pointer"
                           >
                             {saving ? "Menyimpan..." : "Simpan Link"}
                           </Button>
@@ -388,14 +493,26 @@ export default function ContentDetailPage() {
           )}
 
           {!isPublished && (
-            <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+            <Card
+              className={`relative overflow-hidden shadow-xl backdrop-blur-2xl rounded-3xl transition-colors duration-300 ${
+                isDarkMode
+                  ? "border-slate-800/80 bg-slate-900/70 text-slate-100 shadow-blue-950/25"
+                  : "border-slate-200/80 bg-white/90 text-slate-900 shadow-slate-200/60"
+              }`}
+            >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
-              <CardHeader className="pb-4 mb-4 border-b border-slate-800/60">
-                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
-                  <FileText className="w-5 h-5 text-blue-400" />
+              <CardHeader
+                className={`pb-4 mb-4 border-b ${isDarkMode ? "border-slate-800/60" : "border-slate-200"}`}
+              >
+                <CardTitle
+                  className={`flex items-center gap-2 text-lg font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                >
+                  <FileText className="w-5 h-5 text-blue-500" />
                   Formulir Detail & Naskah
                 </CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardDescription
+                  className={isDarkMode ? "text-slate-400" : "text-slate-600"}
+                >
                   Kelola informasi utama dan draf skrip secara terstruktur
                 </CardDescription>
               </CardHeader>
@@ -408,13 +525,15 @@ export default function ContentDetailPage() {
                     channels={channels}
                     editors={isEditor ? undefined : editors}
                     readOnly={isEditor}
-                    showPublishedUrl={false} // Udah dipindah ke atas
+                    showPublishedUrl={false}
                   />
                   {!isEditor && (
-                    <div className="flex justify-end pt-6 mt-6 border-t border-slate-800/60">
+                    <div
+                      className={`flex justify-end pt-6 mt-6 border-t ${isDarkMode ? "border-slate-800/60" : "border-slate-200"}`}
+                    >
                       <Button
                         type="submit"
-                        className="px-6 font-medium text-white bg-blue-600 shadow-xl hover:bg-blue-500 shadow-blue-600/30 h-11 rounded-xl transition-all hover:scale-[1.02]"
+                        className="px-6 font-medium text-white bg-blue-600 shadow-xl hover:bg-blue-500 shadow-blue-600/30 h-11 rounded-xl transition-all hover:scale-[1.02] cursor-pointer"
                         disabled={saving}
                       >
                         {saving ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
@@ -427,22 +546,36 @@ export default function ContentDetailPage() {
           )}
 
           {isPublished && (
-            <Card className="relative overflow-hidden shadow-xl border-slate-800/80 bg-slate-900/60 backdrop-blur-2xl text-slate-100 rounded-3xl">
+            <Card
+              className={`relative overflow-hidden shadow-xl backdrop-blur-2xl rounded-3xl transition-colors duration-300 ${
+                isDarkMode
+                  ? "border-slate-800/80 bg-slate-900/70 text-slate-100 shadow-blue-950/25"
+                  : "border-slate-200/80 bg-white/90 text-slate-900 shadow-slate-200/60"
+              }`}
+            >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-transparent rounded-t-3xl" />
-              <CardHeader className="pb-3 mb-4 border-b border-slate-800/60">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold text-white">
-                  <PlaySquare className="w-5 h-5 text-blue-400" />
+              <CardHeader
+                className={`pb-3 mb-4 border-b ${isDarkMode ? "border-slate-800/60" : "border-slate-200"}`}
+              >
+                <CardTitle
+                  className={`flex items-center gap-2 text-base font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}
+                >
+                  <PlaySquare className="w-5 h-5 text-blue-500" />
                   Pratinjau Video Tayang{" "}
                   {embedType ? `(${embedType.toUpperCase()})` : ""}
                 </CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardDescription
+                  className={isDarkMode ? "text-slate-400" : "text-slate-600"}
+                >
                   Pemutar video otomatis langsung dari tautan publikasi platform
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {embedType === "youtube" ? (
                   <div className="space-y-3">
-                    <div className="relative w-full overflow-hidden border shadow-xl rounded-2xl aspect-video bg-slate-950 border-slate-800">
+                    <div
+                      className={`relative w-full overflow-hidden border shadow-xl rounded-2xl aspect-video ${isDarkMode ? "bg-slate-950 border-slate-800" : "bg-slate-100 border-slate-200"}`}
+                    >
                       <iframe
                         src={embedUrl}
                         title={content.title}
@@ -455,7 +588,7 @@ export default function ContentDetailPage() {
                       href={activePublishedUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="block text-xs font-medium text-center text-blue-400 underline truncate hover:text-blue-300"
+                      className="block text-xs font-medium text-center text-blue-500 underline truncate hover:text-blue-600"
                     >
                       {activePublishedUrl}
                     </a>
@@ -465,46 +598,55 @@ export default function ContentDetailPage() {
                     <TikTokPlayer
                       url={activePublishedUrl}
                       title={content.title}
+                      isDarkMode={isDarkMode}
                     />
                     <a
                       href={activePublishedUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="block text-xs font-medium text-center text-blue-400 underline truncate hover:text-blue-300"
+                      className="block text-xs font-medium text-center text-blue-500 underline truncate hover:text-blue-600"
                     >
                       {activePublishedUrl}
                     </a>
                   </div>
                 ) : embedType === "instagram" ? (
                   <div className="space-y-3">
-                    <div className="flex justify-center w-full p-2 overflow-hidden border shadow-xl rounded-2xl bg-slate-950 border-slate-800">
+                    <div
+                      className={`flex justify-center w-full p-2 overflow-hidden border shadow-xl rounded-2xl ${isDarkMode ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"}`}
+                    >
                       <InstagramEmbed url={activePublishedUrl} width={328} />
                     </div>
                     <a
                       href={activePublishedUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="block text-xs font-medium text-center text-blue-400 underline truncate hover:text-blue-300"
+                      className="block text-xs font-medium text-center text-blue-500 underline truncate hover:text-blue-600"
                     >
                       {activePublishedUrl}
                     </a>
                   </div>
                 ) : activePublishedUrl ? (
-                  <div className="p-6 text-center border rounded-2xl border-slate-800 bg-slate-950/50">
-                    <p className="mb-2 text-sm text-slate-400">
+                  <div
+                    className={`p-6 text-center border rounded-2xl ${isDarkMode ? "border-slate-800 bg-slate-950/50" : "border-slate-200 bg-slate-50"}`}
+                  >
+                    <p
+                      className={`mb-2 text-sm ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}
+                    >
                       Format link tidak didukung untuk pratinjau langsung.
                     </p>
                     <a
                       href={activePublishedUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs font-medium text-blue-400 underline hover:text-blue-300"
+                      className="text-xs font-medium text-blue-500 underline hover:text-blue-600"
                     >
                       Buka tautan eksternal &rarr;
                     </a>
                   </div>
                 ) : (
-                  <p className="py-8 text-sm italic text-center text-slate-500">
+                  <p
+                    className={`py-8 text-sm italic text-center ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}
+                  >
                     Belum ada link postingan yang ditambahkan.
                   </p>
                 )}
